@@ -143,8 +143,8 @@
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        
-        const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/"; 
+
+        const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/";
 
         function switchTab(screen, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -164,56 +164,84 @@
         }
 
         async function loadMovie() {
-            const title = document.getElementById('title');
-            const poster = document.getElementById('poster');
-            title.innerText = "Ищем...";
-            try {
-                const r = await fetch(`${API_BASE}/get_movie`, {headers: {'ngrok-skip-browser-warning': 'true'}});
-                const data = await r.json();
-                title.innerText = data.title;
-                poster.src = data.poster;
-            } catch (e) { title.innerText = "Ошибка API"; }
-        }
+    const title = document.getElementById('title');
+    const poster = document.getElementById('poster');
 
-        async function handleLike() {
-    tg.HapticFeedback.notificationOccurred('success');
-    
-    const title = document.getElementById('title').innerText;
-    const poster = document.getElementById('poster').src;
-    const user_id = tg.initDataUnsafe.user?.id;
-
-    if (!user_id) return;
+    // Сбрасываем старые данные, чтобы не было наложения
+    title.innerText = "Ищем фильм...";
 
     try {
-        await fetch(`${API_BASE}/like`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'ngrok-skip-browser-warning': 'true'
-            },
-            body: JSON.stringify({
-                user_id: user_id,
-                movie_title: title,
-                poster_url: poster
-            })
-        });
-        loadMovie(); // Грузим следующий фильм
-    } catch (e) {
-        console.error("Ошибка при сохранении лайка", e);
-    }
-}
-        async function loadMyLikes() {
-    const list = document.getElementById('likes-list');
-    const user_id = tg.initDataUnsafe.user?.id;
-    
-    if (!user_id) return;
-
-    try {
-        const r = await fetch(`${API_BASE}/get_likes/${user_id}`, {
+        const r = await fetch(`${API_BASE}/get_movie`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
+        const data = await r.json();
+
+        // Проверяем наличие полей в консоли (нажми F12 в браузере, если тестишь с ПК)
+        console.log("Данные от сервера:", data);
+
+        if (data.title && data.poster) {
+            title.innerText = data.title;
+            poster.src = data.poster;
+
+            poster.onload = () => {
+                poster.classList.add('loaded');
+            };
+        } else {
+            title.innerText = "Фильм без названия";
+        }
+    } catch (e) {
+        title.innerText = "Ошибка API 📡";
+    }
+}
+
+        async function handleLike() {
+            tg.HapticFeedback.notificationOccurred('success');
+
+            const title = document.getElementById('title').innerText;
+            const poster = document.getElementById('poster').src;
+            const user_id = tg.initDataUnsafe.user?.id;
+
+            if (!user_id) return;
+
+            try {
+                await fetch(`${API_BASE}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify({
+                        user_id: user_id,
+                        movie_title: title,
+                        poster_url: poster
+                    })
+                });
+                loadMovie(); // Грузим следующий фильм
+            } catch (e) {
+                console.error("Ошибка при сохранении лайка", e);
+            }
+        }
+
+async function loadMyLikes() {
+    const list = document.getElementById('likes-list');
+    const user = tg.initDataUnsafe.user;
+
+    if (!user || !user.id) {
+        list.innerHTML = "Не удалось определить ваш ID";
+        return;
+    }
+
+    try {
+        // Формируем запрос аккуратно
+        const url = `${API_BASE}/get_likes/${user.id}`;
+        const r = await fetch(url, {
+            headers: {'ngrok-skip-browser-warning': 'true'}
+        });
+
+        if (!r.ok) throw new Error('Ошибка сервера');
+
         const likes = await r.json();
-        
+
         if (likes.length === 0) {
             list.innerHTML = "Вы еще ничего не лайкнули 🍿";
             return;
@@ -221,12 +249,13 @@
 
         list.innerHTML = likes.map(m => `
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; background:var(--card-bg); padding:10px; border-radius:10px;">
-                <img src="${m.poster}" style="width:40px; border-radius:5px;">
-                <span>${m.title}</span>
+                <img src="${m.poster}" style="width:40px; height:60px; object-fit:cover; border-radius:5px;">
+                <span style="font-size:0.9rem;">${m.title}</span>
             </div>
         `).join('');
     } catch (e) {
-        list.innerHTML = "Ошибка загрузки данных.";
+        console.error(e);
+        list.innerHTML = "Ошибка загрузки: проверьте ngrok";
     }
 }
 
@@ -236,7 +265,7 @@ function switchTab(screen, el) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.getElementById(screen + '-screen').classList.add('active');
     el.classList.add('active');
-    
+
     if (screen === 'profile') loadMyLikes(); // Загружаем лайки при переходе
     tg.HapticFeedback.impactOccurred('light');
 }
@@ -247,5 +276,3 @@ function switchTab(screen, el) {
     </script>
 </body>
 </html>
-
-
