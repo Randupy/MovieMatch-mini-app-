@@ -96,30 +96,30 @@
         .nav-icon { font-size: 1.5rem; margin-bottom: 4px; }
 
         #search-screen {
-            padding: 10px 10px 0 10px; /* Убрали нижний паддинг экрана */
+            padding: 10px 10px 0 10px;
             justify-content: flex-start;
         }
 
         .tinder-card {
             width: 100%;
             max-width: 380px;
-            height: 80vh; /* Увеличено, чтобы карточка была почти до меню */
-            background: var(--surface);
+            height: 81vh; /* Максимальная высота до меню */
+            background: var(--card-bg);
             border-radius: 32px;
             overflow: hidden;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             display: flex;
             flex-direction: column;
-            margin: 0 auto; /* Убрали лишние отступы */
+            margin: 0 auto;
             position: relative;
         }
 
         .tinder-img {
             width: 100%;
             height: 55%;
-            object-fit: cover;
-            object-position: center 10%;
+            object-fit: contain; /* Теперь изображение не обрезается, а вписывается целиком */
+            background-color: #000; /* Фон для пустых мест, если постер узкий */
             opacity: 0;
             transition: opacity 0.5s ease;
         }
@@ -131,9 +131,10 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            background: linear-gradient(180deg, rgba(30,41,59,0) 0%, rgba(30,41,59,1) 12%);
-            margin-top: -35px;
+            background: linear-gradient(180deg, rgba(30,41,59,0) 0%, rgba(30,41,59,1) 15%);
+            margin-top: -20px;
             position: relative;
+            z-index: 2;
             overflow-y: auto;
         }
 
@@ -158,7 +159,8 @@
             justify-content: center; 
             gap: 40px; 
             padding: 15px 20px 20px; 
-            background: rgba(15, 23, 42, 0.6); 
+            background: rgba(15, 23, 42, 0.8);
+            z-index: 3;
         }
 
         .btn-circle {
@@ -277,7 +279,7 @@
         }
 
         function showSupport() {
-            tg.showAlert("🍿 MovieMatch v1.9\n\nЗазор устранен, карточка теперь занимает максимум места.");
+            tg.showAlert("🍿 MovieMatch v2.0\n\nИзображения больше не обрезаются. Карточка растянута до меню.");
         }
 
         async function loadMovie() {
