@@ -195,42 +195,56 @@ pingServer();
 
 
 
-let isLoading = false; // Флаг, чтобы не спамить запросами
+let isLoading = false;
+let abortController = null;
 
 async function loadMovie() {
-    if (isLoading) return; // Если уже грузим — выходим
+    // 1. Если уже идет загрузка, отменяем старый запрос перед началом нового
+    if (isLoading && abortController) {
+        abortController.abort();
+    }
 
     const title = document.getElementById('title');
     const poster = document.getElementById('poster');
 
     isLoading = true;
+    abortController = new AbortController();
+
     title.innerText = "Загрузка...";
 
     try {
-        const url = `${API_BASE}/get_movie?v=${Date.now()}`;
+        // Добавляем случайный параметр, чтобы мобильный оператор не кэшировал ошибку
+        const url = `${API_BASE}/get_movie?nocache=${Date.now()}`;
 
         const response = await fetch(url, {
             headers: { 'ngrok-skip-browser-warning': 'true' },
-            signal: AbortSignal.timeout(10000) // Ждем до 10 сек
+            signal: abortController.signal // Позволяет отменить запрос
         });
 
-        if (!response.ok) throw new Error("Network response was not ok");
+        if (!response.ok) throw new Error("Server error");
 
         const data = await response.json();
 
+        // Обновляем интерфейс
         title.innerText = data.title;
         poster.src = data.poster;
 
         poster.onload = () => {
             poster.classList.add('loaded');
-            isLoading = false; // Разрешаем новый запрос только после загрузки картинки
+            isLoading = false;
+        };
+
+        poster.onerror = () => {
+            title.innerText = "Ошибка загрузки постера";
+            isLoading = false;
         };
 
     } catch (e) {
-        console.error("Ошибка загрузки:", e);
-        title.innerText = "Ошибка связи. Пробуем еще раз...";
+        if (e.name === 'AbortError') return; // Игнорируем ручную отмену
+
+        console.error("Connection error:", e);
+        title.innerText = "Связь прервана. Нажми еще раз 🔄";
         isLoading = false;
-        // Вместо мгновенного повтора, даем пользователю нажать кнопку еще раз
     }
 }
 
