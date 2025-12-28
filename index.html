@@ -154,7 +154,7 @@
     </nav>
 
     <script>
-        
+
         // Функция "прогрева" связи
 async function pingServer() {
     try {
@@ -195,60 +195,52 @@ pingServer();
 
 
 
-let retryCount = 0; // Добавь это в начало скрипта для контроля попыток
+let retryCount = 0;
 
 async function loadMovie() {
     const title = document.getElementById('title');
     const poster = document.getElementById('poster');
-    const card = document.getElementById('movie-card');
 
     title.innerText = "Загрузка...";
-    card?.classList.add('loading'); // Если у тебя есть класс анимации загрузки
 
     try {
-        // Добавляем Cache Buster (?v=...), чтобы мобильный браузер не отдавал старую ошибку
-        const url = `${API_BASE}/get_movie?v=${Date.now()}`;
+        // Добавляем уникальный параметр, чтобы обойти кэш оператора
+        const url = `${API_BASE}/get_movie?nocache=${Date.now()}`;
 
         const response = await fetch(url, {
             headers: { 'ngrok-skip-browser-warning': 'true' },
-            // Прерываем запрос, если сервер не ответил за 7 секунд
-            signal: AbortSignal.timeout(7000)
+            // Увеличиваем таймаут для мобильных сетей до 10 секунд
+            signal: AbortSignal.timeout(10000)
         });
 
-        if (!response.ok) throw new Error("Сервер не отвечает");
+        if (!response.ok) throw new Error("Status " + response.status);
 
         const data = await response.json();
 
         if (data.error) {
-            title.innerText = "Ошибка API Кинопоиска";
+            title.innerText = "Ошибка Кинопоиска";
             return;
         }
 
-        // Если всё успешно, сбрасываем счетчик ошибок
-        retryCount = 0;
-
+        retryCount = 0; // Сброс при успехе
         title.innerText = data.title;
         poster.src = data.poster;
-
-        poster.onload = () => {
-            poster.classList.add('loaded');
-            card?.classList.remove('loading');
-        };
+        poster.classList.remove('loaded');
+        poster.onload = () => poster.classList.add('loaded');
 
     } catch (e) {
-    console.error("Ошибка связи:", e);
-    // Показываем пользователю, что мы пытаемся восстановить связь
-    title.innerText = "Связь нестабильна... Переподключаюсь 🔄";
+        console.error("Connection error:", e);
 
-    if (retryCount < 5) { // Увеличим до 5 попыток
-        retryCount++;
-        // Увеличиваем время перед каждой следующей попыткой (2с, 4с, 6с...)
-        setTimeout(() => loadMovie(), 2000 * retryCount);
-    } else {
-        title.innerText = "Сервер временно недоступен 📡";
-        retryCount = 0;
+        if (retryCount < 3) {
+            retryCount++;
+            title.innerText = `Переподключение... (${retryCount})`;
+            // Рекурсивный вызов через паузу
+            setTimeout(loadMovie, 2000);
+        } else {
+            title.innerText = "Связь потеряна. Нажми кнопку поиска еще раз.";
+            retryCount = 0;
+        }
     }
-}
 }
 
 // Переключаем на меню выбора при клике на "Вдвоем" в главном меню
