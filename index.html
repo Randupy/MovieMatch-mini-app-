@@ -101,13 +101,13 @@
         /* Tinder-интерфейс Оптимизированный */
         #search-screen {
             padding: 10px;
-            justify-content: center;
+            justify-content: flex-start; /* Поднимаем чуть выше */
         }
 
         .tinder-card {
             width: 100%;
             max-width: 380px;
-            height: 78vh; /* Фиксированная высота, чтобы влезло на любой экран */
+            height: 72vh; /* Уменьшили высоту, чтобы не накладывалось на меню */
             background: var(--surface);
             border-radius: 32px;
             overflow: hidden;
@@ -115,7 +115,7 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             display: flex;
             flex-direction: column;
-            margin: auto;
+            margin: 10px auto 80px; /* Добавили отступ снизу (80px) от меню */
         }
 
         .tinder-img {
@@ -310,7 +310,6 @@
                 title.innerText = data.title;
                 poster.src = data.poster;
                 
-                // Отображение доп. инфо (если сервер их присылает)
                 desc.innerText = data.description || "Описание временно недоступно.";
                 rating.innerText = data.rating || "?.?";
                 meta.innerText = `${data.year || '----'} • ${data.genres || 'Кино'}`;
