@@ -195,51 +195,42 @@ pingServer();
 
 
 
-let retryCount = 0;
+let isLoading = false; // Флаг, чтобы не спамить запросами
 
 async function loadMovie() {
+    if (isLoading) return; // Если уже грузим — выходим
+
     const title = document.getElementById('title');
     const poster = document.getElementById('poster');
 
+    isLoading = true;
     title.innerText = "Загрузка...";
 
     try {
-        // Добавляем уникальный параметр, чтобы обойти кэш оператора
-        const url = `${API_BASE}/get_movie?nocache=${Date.now()}`;
+        const url = `${API_BASE}/get_movie?v=${Date.now()}`;
 
         const response = await fetch(url, {
             headers: { 'ngrok-skip-browser-warning': 'true' },
-            // Увеличиваем таймаут для мобильных сетей до 10 секунд
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(10000) // Ждем до 10 сек
         });
 
-        if (!response.ok) throw new Error("Status " + response.status);
+        if (!response.ok) throw new Error("Network response was not ok");
 
         const data = await response.json();
 
-        if (data.error) {
-            title.innerText = "Ошибка Кинопоиска";
-            return;
-        }
-
-        retryCount = 0; // Сброс при успехе
         title.innerText = data.title;
         poster.src = data.poster;
-        poster.classList.remove('loaded');
-        poster.onload = () => poster.classList.add('loaded');
+
+        poster.onload = () => {
+            poster.classList.add('loaded');
+            isLoading = false; // Разрешаем новый запрос только после загрузки картинки
+        };
 
     } catch (e) {
-        console.error("Connection error:", e);
-
-        if (retryCount < 3) {
-            retryCount++;
-            title.innerText = `Переподключение... (${retryCount})`;
-            // Рекурсивный вызов через паузу
-            setTimeout(loadMovie, 2000);
-        } else {
-            title.innerText = "Связь потеряна. Нажми кнопку поиска еще раз.";
-            retryCount = 0;
-        }
+        console.error("Ошибка загрузки:", e);
+        title.innerText = "Ошибка связи. Пробуем еще раз...";
+        isLoading = false;
+        // Вместо мгновенного повтора, даем пользователю нажать кнопку еще раз
     }
 }
 
