@@ -202,6 +202,44 @@
         console.error("Ошибка при сохранении лайка", e);
     }
 }
+        async function loadMyLikes() {
+    const list = document.getElementById('likes-list');
+    const user_id = tg.initDataUnsafe.user?.id;
+    
+    if (!user_id) return;
+
+    try {
+        const r = await fetch(`${API_BASE}/get_likes/${user_id}`, {
+            headers: {'ngrok-skip-browser-warning': 'true'}
+        });
+        const likes = await r.json();
+        
+        if (likes.length === 0) {
+            list.innerHTML = "Вы еще ничего не лайкнули 🍿";
+            return;
+        }
+
+        list.innerHTML = likes.map(m => `
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; background:var(--card-bg); padding:10px; border-radius:10px;">
+                <img src="${m.poster}" style="width:40px; border-radius:5px;">
+                <span>${m.title}</span>
+            </div>
+        `).join('');
+    } catch (e) {
+        list.innerHTML = "Ошибка загрузки данных.";
+    }
+}
+
+// Обновим вызов переключения вкладок
+function switchTab(screen, el) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.getElementById(screen + '-screen').classList.add('active');
+    el.classList.add('active');
+    
+    if (screen === 'profile') loadMyLikes(); // Загружаем лайки при переходе
+    tg.HapticFeedback.impactOccurred('light');
+}
 
         // Заполняем профиль
         document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Киноман";
@@ -209,4 +247,5 @@
     </script>
 </body>
 </html>
+
 
