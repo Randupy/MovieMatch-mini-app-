@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -23,23 +23,31 @@
             color: var(--text-main);
             font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
-            padding-bottom: 90px;
-            overflow-x: hidden;
-            min-height: 100vh;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden; /* Запрещаем общий скролл страницы */
+            display: flex;
+            flex-direction: column;
         }
 
         /* Экраны */
-        .screen { display: none; padding: 20px; animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .active { display: block; }
+        .screen { 
+            display: none; 
+            padding: 20px; 
+            flex: 1;
+            overflow-y: auto;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .active { display: flex; flex-direction: column; }
 
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(20px); } 
-            to { opacity: 1; transform: translateY(0); } 
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 24px; text-align: center; }
 
-        /* Красивые карточки режимов */
+        /* Карточки режимов */
         .mode-card {
             background: var(--surface);
             backdrop-filter: blur(12px);
@@ -55,8 +63,8 @@
             transition: all 0.3s ease;
         }
         .mode-card:active { transform: scale(0.96); background: rgba(255,255,255,0.1); }
-        .mode-icon { 
-            font-size: 2.2rem; 
+        .mode-icon {
+            font-size: 2.2rem;
             background: rgba(255,255,255,0.05);
             width: 64px; height: 64px;
             display: flex; align-items: center; justify-content: center;
@@ -71,7 +79,7 @@
             bottom: 15px;
             left: 15px;
             right: 15px;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             display: flex;
@@ -90,39 +98,85 @@
         .nav-item.active { color: var(--accent); transform: translateY(-2px); }
         .nav-icon { font-size: 1.5rem; margin-bottom: 4px; }
 
-        /* Tinder-интерфейс */
-        .tinder-card { 
-            width: 100%; max-width: 360px; margin: 0 auto; 
-            background: var(--surface); 
-            border-radius: 32px; 
-            overflow: hidden; 
+        /* Tinder-интерфейс Оптимизированный */
+        #search-screen {
+            padding: 10px;
+            justify-content: center;
+        }
+
+        .tinder-card {
+            width: 100%;
+            max-width: 380px;
+            height: 78vh; /* Фиксированная высота, чтобы влезло на любой экран */
+            background: var(--surface);
+            border-radius: 32px;
+            overflow: hidden;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            margin: auto;
         }
-        .tinder-img { 
-            width: 100%; aspect-ratio: 2/3; object-fit: cover; 
-            opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease;
+
+        .tinder-img {
+            width: 100%;
+            height: 50%; /* Постер занимает половину карточки */
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
         .tinder-img.loaded { opacity: 1; }
-        .tinder-info { padding: 20px; text-align: center; }
-        .tinder-info h2 { font-size: 1.4rem; margin: 0; font-weight: 700; color: #fff; }
 
-        .tinder-btns { display: flex; justify-content: center; gap: 30px; padding: 20px; background: rgba(0,0,0,0.2); }
-        .btn-circle { 
-            width: 70px; height: 70px; border-radius: 50%; border: none; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 1.8rem; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        .tinder-info-container {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: linear-gradient(180deg, rgba(30,41,59,0) 0%, rgba(30,41,59,1) 15%);
+            margin-top: -30px;
+            position: relative;
+            overflow-y: auto; /* Скролл только для текста, если он длинный */
+        }
+
+        .rating-badge {
+            position: absolute;
+            top: -20px;
+            right: 20px;
+            background: var(--accent);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(56, 189, 248, 0.4);
+        }
+
+        .tinder-info h2 { font-size: 1.3rem; margin: 5px 0 0 0; font-weight: 800; color: #fff; }
+        .movie-meta { font-size: 0.8rem; color: var(--text-dim); }
+        .movie-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.4; margin-top: 5px; }
+
+        .tinder-btns { 
+            display: flex; 
+            justify-content: center; 
+            gap: 35px; 
+            padding: 15px; 
+            background: rgba(15, 23, 42, 0.5); 
+        }
+
+        .btn-circle {
+            width: 65px; height: 65px; border-radius: 50%; border: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem; cursor: pointer; transition: 0.2s;
         }
         .btn-circle:active { transform: scale(0.85); }
-        .btn-dislike { background: #fff; color: var(--danger); box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3); }
-        .btn-like { background: var(--success); color: #fff; box-shadow: 0 8px 20px rgba(0, 230, 118, 0.3); }
+        .btn-dislike { background: #fff; color: var(--danger); box-shadow: 0 5px 15px rgba(239, 68, 68, 0.2); }
+        .btn-like { background: var(--success); color: #fff; box-shadow: 0 5px 15px rgba(0, 230, 118, 0.2); }
 
-        /* Стили кнопок "Назад" и прочего */
         .action-btn {
             background: var(--accent); color: #000; border: none;
             padding: 16px; border-radius: 18px; width: 100%;
             font-weight: 700; font-size: 1rem; margin-top: 12px;
-            cursor: pointer; transition: 0.2s;
         }
     </style>
 </head>
@@ -149,7 +203,12 @@
     <div id="search-screen" class="screen">
         <div class="tinder-card">
             <img id="poster" class="tinder-img" src="" alt="">
-            <div class="tinder-info"><h2 id="title">Загрузка...</h2></div>
+            <div class="tinder-info-container">
+                <div id="rating" class="rating-badge">0.0</div>
+                <div class="tinder-info"><h2 id="title">Загрузка...</h2></div>
+                <div id="meta" class="movie-meta">----, -----</div>
+                <div id="desc" class="movie-desc">Загружаем описание фильма...</div>
+            </div>
             <div class="tinder-btns">
                 <button class="btn-circle btn-dislike" onclick="loadMovie()">✕</button>
                 <button class="btn-circle btn-like" onclick="handleLike()">❤</button>
@@ -184,16 +243,13 @@
 
     <nav class="nav-bar">
         <div class="nav-item active" onclick="switchTab('home', this)">
-            <span class="nav-icon">🏠</span>
-            <span>Главная</span>
+            <span class="nav-icon">🏠</span><span>Главная</span>
         </div>
         <div class="nav-item" onclick="switchTab('profile', this)">
-            <span class="nav-icon">👤</span>
-            <span>Профиль</span>
+            <span class="nav-icon">👤</span><span>Профиль</span>
         </div>
         <div class="nav-item" onclick="showSupport()">
-            <span class="nav-icon">🛠</span>
-            <span>Помощь</span>
+            <span class="nav-icon">🛠</span><span>Помощь</span>
         </div>
     </nav>
 
@@ -213,7 +269,7 @@
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById(screen + '-screen').classList.add('active');
             if (el) el.classList.add('active');
-            
+
             if (screen === 'profile') loadMyLikes();
             tg.HapticFeedback.impactOccurred('medium');
         }
@@ -224,14 +280,17 @@
         }
 
         function showSupport() {
-            tg.showAlert("🍿 MovieMatch v1.5\n\nЕсли возникли вопросы или сервер недоступен, пиши: @твой_логин");
+            tg.showAlert("🍿 MovieMatch v1.6\n\nДизайн оптимизирован для мобильных устройств.");
         }
 
         async function loadMovie() {
             if (isLoading && abortController) abortController.abort();
-            
+
             const title = document.getElementById('title');
             const poster = document.getElementById('poster');
+            const desc = document.getElementById('desc');
+            const rating = document.getElementById('rating');
+            const meta = document.getElementById('meta');
 
             isLoading = true;
             abortController = new AbortController();
@@ -250,6 +309,12 @@
 
                 title.innerText = data.title;
                 poster.src = data.poster;
+                
+                // Отображение доп. инфо (если сервер их присылает)
+                desc.innerText = data.description || "Описание временно недоступно.";
+                rating.innerText = data.rating || "?.?";
+                meta.innerText = `${data.year || '----'} • ${data.genres || 'Кино'}`;
+
                 poster.onload = () => {
                     poster.classList.add('loaded');
                     isLoading = false;
