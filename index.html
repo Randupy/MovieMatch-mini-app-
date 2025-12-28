@@ -96,14 +96,14 @@
         .nav-icon { font-size: 1.5rem; margin-bottom: 4px; }
 
         #search-screen {
-            padding: 10px;
+            padding: 10px 10px 0 10px; /* Убрали нижний паддинг экрана */
             justify-content: flex-start;
         }
 
         .tinder-card {
             width: 100%;
             max-width: 380px;
-            height: 76vh; /* Оптимальная высота */
+            height: 80vh; /* Увеличено, чтобы карточка была почти до меню */
             background: var(--surface);
             border-radius: 32px;
             overflow: hidden;
@@ -111,14 +111,15 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             display: flex;
             flex-direction: column;
-            margin: 0 auto 85px; 
+            margin: 0 auto; /* Убрали лишние отступы */
+            position: relative;
         }
 
         .tinder-img {
             width: 100%;
-            height: 55%; /* Увеличили область изображения */
+            height: 55%;
             object-fit: cover;
-            object-position: center 10%; /* Чтобы не обрезало верхушки (лица) */
+            object-position: center 10%;
             opacity: 0;
             transition: opacity 0.5s ease;
         }
@@ -276,7 +277,7 @@
         }
 
         function showSupport() {
-            tg.showAlert("🍿 MovieMatch v1.8\n\nПостеры теперь отображаются крупнее и корректнее.");
+            tg.showAlert("🍿 MovieMatch v1.9\n\nЗазор устранен, карточка теперь занимает максимум места.");
         }
 
         async function loadMovie() {
