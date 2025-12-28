@@ -178,33 +178,57 @@
 
 
 
+let retryCount = 0; // Добавь это в начало скрипта для контроля попыток
+
 async function loadMovie() {
     const title = document.getElementById('title');
     const poster = document.getElementById('poster');
+    const card = document.getElementById('movie-card');
 
     title.innerText = "Загрузка...";
+    card?.classList.add('loading'); // Если у тебя есть класс анимации загрузки
 
     try {
-        const response = await fetch(`${API_BASE}/get_movie`, {
-            headers: { 'ngrok-skip-browser-warning': 'true' }
+        // Добавляем Cache Buster (?v=...), чтобы мобильный браузер не отдавал старую ошибку
+        const url = `${API_BASE}/get_movie?v=${Date.now()}`;
+
+        const response = await fetch(url, {
+            headers: { 'ngrok-skip-browser-warning': 'true' },
+            // Прерываем запрос, если сервер не ответил за 7 секунд
+            signal: AbortSignal.timeout(7000)
         });
+
+        if (!response.ok) throw new Error("Сервер не отвечает");
+
         const data = await response.json();
 
-        // Проверка: если пришла ошибка от сервера
         if (data.error) {
             title.innerText = "Ошибка API Кинопоиска";
             return;
         }
+
+        // Если всё успешно, сбрасываем счетчик ошибок
+        retryCount = 0;
 
         title.innerText = data.title;
         poster.src = data.poster;
 
         poster.onload = () => {
             poster.classList.add('loaded');
+            card?.classList.remove('loading');
         };
+
     } catch (e) {
-        console.error(e);
-        title.innerText = "Ошибка соединения";
+        console.error("Ошибка связи:", e);
+
+        if (retryCount < 3) {
+            retryCount++;
+            title.innerText = `Связь прервана. Пробую еще раз... (${retryCount})`;
+            setTimeout(() => loadMovie(), 2000); // Пробуем через 2 секунды
+        } else {
+            title.innerText = "Проверьте интернет или сервер 📡";
+            retryCount = 0; // Сбрасываем для возможности ручного обновления
+        }
     }
 }
 
