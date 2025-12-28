@@ -163,36 +163,39 @@
             tg.showAlert("Поддержка: @твой_логин_в_тг\nРежим 'Вдвоем' в разработке!");
         }
 
-        async function loadMovie() {
+        // Проверь, чтобы в конце ссылки НЕ БЫЛО слэша /
+const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/".replace(/\/$/, "");
+
+async function loadMovie() {
     const title = document.getElementById('title');
     const poster = document.getElementById('poster');
 
-    // Сбрасываем старые данные, чтобы не было наложения
-    title.innerText = "Ищем фильм...";
+    title.innerText = "Загрузка...";
 
     try {
-        const r = await fetch(`${API_BASE}/get_movie`, {
-            headers: {'ngrok-skip-browser-warning': 'true'}
+        const response = await fetch(`${API_BASE}/get_movie`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
         });
-        const data = await r.json();
+        const data = await response.json();
 
-        // Проверяем наличие полей в консоли (нажми F12 в браузере, если тестишь с ПК)
-        console.log("Данные от сервера:", data);
-
-        if (data.title && data.poster) {
-            title.innerText = data.title;
-            poster.src = data.poster;
-
-            poster.onload = () => {
-                poster.classList.add('loaded');
-            };
-        } else {
-            title.innerText = "Фильм без названия";
+        // Проверка: если пришла ошибка от сервера
+        if (data.error) {
+            title.innerText = "Ошибка API Кинопоиска";
+            return;
         }
+
+        title.innerText = data.title;
+        poster.src = data.poster;
+
+        poster.onload = () => {
+            poster.classList.add('loaded');
+        };
     } catch (e) {
-        title.innerText = "Ошибка API 📡";
+        console.error(e);
+        title.innerText = "Ошибка соединения";
     }
 }
+
 
         async function handleLike() {
             tg.HapticFeedback.notificationOccurred('success');
@@ -227,35 +230,30 @@ async function loadMyLikes() {
     const user = tg.initDataUnsafe.user;
 
     if (!user || !user.id) {
-        list.innerHTML = "Не удалось определить ваш ID";
+        list.innerHTML = "Ошибка: ID не найден";
         return;
     }
 
     try {
-        // Формируем запрос аккуратно
-        const url = `${API_BASE}/get_likes/${user.id}`;
-        const r = await fetch(url, {
-            headers: {'ngrok-skip-browser-warning': 'true'}
+        // Явно передаем ID в URL
+        const response = await fetch(`${API_BASE}/get_likes/${user.id}`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
         });
+        const likes = await response.json();
 
-        if (!r.ok) throw new Error('Ошибка сервера');
-
-        const likes = await r.json();
-
-        if (likes.length === 0) {
-            list.innerHTML = "Вы еще ничего не лайкнули 🍿";
+        if (!likes || likes.length === 0) {
+            list.innerHTML = "Список пуст 🍿";
             return;
         }
 
         list.innerHTML = likes.map(m => `
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; background:var(--card-bg); padding:10px; border-radius:10px;">
-                <img src="${m.poster}" style="width:40px; height:60px; object-fit:cover; border-radius:5px;">
-                <span style="font-size:0.9rem;">${m.title}</span>
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px;">
+                <img src="${m.poster}" style="width:45px; height:65px; object-fit:cover; border-radius:6px;">
+                <span style="font-size:0.9rem; font-weight:500;">${m.title}</span>
             </div>
         `).join('');
     } catch (e) {
-        console.error(e);
-        list.innerHTML = "Ошибка загрузки: проверьте ngrok";
+        list.innerHTML = "Ошибка: проверьте статус сервера";
     }
 }
 
