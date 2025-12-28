@@ -175,12 +175,33 @@
             } catch (e) { title.innerText = "Ошибка API"; }
         }
 
-        function handleLike() {
-            tg.HapticFeedback.notificationOccurred('success');
-            // Тут позже добавим fetch на /like
-            tg.showScanQrPopup({text: "Сохранено!"}); 
-            setTimeout(() => { tg.closeScanQrPopup(); loadMovie(); }, 500);
-        }
+        async function handleLike() {
+    tg.HapticFeedback.notificationOccurred('success');
+    
+    const title = document.getElementById('title').innerText;
+    const poster = document.getElementById('poster').src;
+    const user_id = tg.initDataUnsafe.user?.id;
+
+    if (!user_id) return;
+
+    try {
+        await fetch(`${API_BASE}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+                user_id: user_id,
+                movie_title: title,
+                poster_url: poster
+            })
+        });
+        loadMovie(); // Грузим следующий фильм
+    } catch (e) {
+        console.error("Ошибка при сохранении лайка", e);
+    }
+}
 
         // Заполняем профиль
         document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Киноман";
@@ -188,3 +209,4 @@
     </script>
 </body>
 </html>
+
