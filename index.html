@@ -144,7 +144,7 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/";
+        const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/".replace(/\/$/, "");
 
         function switchTab(screen, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -163,8 +163,7 @@
             tg.showAlert("Поддержка: @твой_логин_в_тг\nРежим 'Вдвоем' в разработке!");
         }
 
-        // Проверь, чтобы в конце ссылки НЕ БЫЛО слэша /
-const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/".replace(/\/$/, "");
+
 
 async function loadMovie() {
     const title = document.getElementById('title');
