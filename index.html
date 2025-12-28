@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Контейнер для карточки */
+        .card-container {
+            position: relative;
+            width: 85%;
+            max-width: 340px;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            transform: scale(1);
+        }
+
+        .card.loading {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+
+        /* Изображение с эффектом скелетона */
+        .poster-wrapper {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            background: #2d3748;
+            position: relative;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        img.loaded {
+            opacity: 1;
+        }
+
+        /* Инфо блок */
+        .info {
+            padding: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.4;
+            min-height: 3.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Кнопка */
+        .controls {
+            margin-top: 25px;
+            width: 85%;
+            max-width: 340px;
+        }
+
+        .next-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .next-btn:active {
+            transform: scale(0.96);
+            filter: brightness(1.1);
+        }
+
+        /* Анимация свайпа при клике */
+        .swipe-right {
+            transform: translateX(120%) rotate(20deg) !important;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        <div id="movie-card" class="card">
+            <div class="poster-wrapper">
+                <img id="poster" src="" alt="">
+            </div>
+            <div class="info">
+                <h2 id="title">Загружаем магию...</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="next-btn" onclick="nextMovie()">СЛЕДУЮЩИЙ</button>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.headerColor = '#0f172a';
+
+        // --- ВАЖНО: ТВОЯ ССЫЛКА NGROK ---
+        const API_BASE = "https://ТВОЙ-АДРЕС.ngrok-free.app";
+
+        async function loadMovie() {
+            const card = document.getElementById('movie-card');
+            const poster = document.getElementById('poster');
+            const title = document.getElementById('title');
+
+            card.classList.add('loading');
+            poster.classList.remove('loaded');
+
+            try {
+                const response = await fetch(`${API_BASE}/get_movie`, {
+                    headers: { 'ngrok-skip-browser-warning': 'true' }
+                });
+                const data = await response.json();
+
+                if (data.title) {
+                    title.innerText = data.title;
+                    // Проксируем через наш сервер
+                    poster.src = `${API_BASE}/proxy_image?path=${encodeURIComponent(data.poster)}`;
+
+                    poster.onload = () => {
+                        poster.classList.add('loaded');
+                        card.classList.remove('loading');
+                    };
+                }
+            } catch (e) {
+                title.innerText = "Ошибка связи 📡";
+                console.error(e);
+            }
+        }
+
+        function nextMovie() {
+            // Вибрация (Haptic Feedback)
+            tg.HapticFeedback.impactOccurred('medium');
+
+            const card = document.getElementById('movie-card');
+            card.classList.add('swipe-right');
+
+            setTimeout(() => {
+                card.classList.remove('swipe-right');
+                loadMovie();
+            }, 300);
+        }
+
+        // Первый запуск
+        loadMovie();
+    </script>
+</body>
+</html>
