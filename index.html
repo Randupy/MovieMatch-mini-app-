@@ -148,34 +148,43 @@
         const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev";
 
         async function loadMovie() {
-            const card = document.getElementById('movie-card');
-            const poster = document.getElementById('poster');
-            const title = document.getElementById('title');
+    const card = document.getElementById('movie-card');
+    const poster = document.getElementById('poster');
+    const title = document.getElementById('title');
 
-            card.classList.add('loading');
-            poster.classList.remove('loaded');
+    card.classList.add('loading');
+    title.innerText = "Ищем фильм...";
 
-            try {
-                const response = await fetch(`${API_BASE}/get_movie`, {
-                    headers: { 'ngrok-skip-browser-warning': 'true' }
-                });
-                const data = await response.json();
+    try {
+        // 1. Получаем данные о фильме
+        const response = await fetch(`${API_BASE}/get_movie`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+        const data = await response.json();
 
-                if (data.title) {
-                    title.innerText = data.title;
-                    // Проксируем через наш сервер
-                    poster.src = `${API_BASE}/proxy_image?path=${encodeURIComponent(data.poster)}`;
+        if (data.title) {
+            title.innerText = data.title;
 
-                    poster.onload = () => {
-                        poster.classList.add('loaded');
-                        card.classList.remove('loading');
-                    };
-                }
-            } catch (e) {
-                title.innerText = "Ошибка связи 📡";
-                console.error(e);
-            }
+            // 2. ХИТРЫЙ ХАК ДЛЯ КАРТИНКИ:
+            // Вместо простого poster.src мы качаем её через fetch с заголовком
+            const imgResponse = await fetch(`${API_BASE}/proxy_image?path=${encodeURIComponent(data.poster)}`, {
+                headers: { 'ngrok-skip-browser-warning': 'true' }
+            });
+            const blob = await imgResponse.blob();
+            const objectURL = URL.createObjectURL(blob);
+            
+            poster.src = objectURL;
+            
+            poster.onload = () => {
+                poster.classList.add('loaded');
+                card.classList.remove('loading');
+            };
         }
+    } catch (e) {
+        title.innerText = "Ошибка связи 📡";
+        console.error(e);
+    }
+}
 
         function nextMovie() {
             // Вибрация (Haptic Feedback)
@@ -196,4 +205,5 @@
 </body>
 
 </html>
+
 
