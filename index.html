@@ -8,7 +8,7 @@
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
-            --accent-color: #38bdf8;
+            --accent: #38bdf8;
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
         }
@@ -16,185 +16,175 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, system-ui, sans-serif;
             margin: 0;
+            padding-bottom: 70px; /* Место под меню */
+            overflow-x: hidden;
+        }
+
+        /* Экраны */
+        .screen { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { font-size: 1.5rem; margin-bottom: 20px; }
+
+        /* Карточки режимов */
+        .mode-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .mode-card:active { transform: scale(0.98); background: #2d3748; }
+        .mode-icon { font-size: 2rem; }
+        .mode-info h3 { margin: 0; font-size: 1.1rem; }
+        .mode-info p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-dim); }
+
+        /* Навигация (Tab Bar) */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Контейнер для карточки */
-        .card-container {
-            position: relative;
-            width: 85%;
-            max-width: 340px;
-            perspective: 1000px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-            transform: scale(1);
-        }
-
-        .card.loading {
-            opacity: 0.6;
-            transform: scale(0.95);
-        }
-
-        /* Изображение с эффектом скелетона */
-        .poster-wrapper {
-            width: 100%;
-            aspect-ratio: 2 / 3;
-            background: #2d3748;
-            position: relative;
-        }
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        img.loaded {
-            opacity: 1;
-        }
-
-        /* Инфо блок */
-        .info {
-            padding: 20px;
-            text-align: center;
-        }
-
-        h2 {
-            margin: 0;
-            font-size: 1.25rem;
-            font-weight: 700;
-            line-height: 1.4;
-            min-height: 3.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Кнопка */
-        .controls {
-            margin-top: 25px;
-            width: 85%;
-            max-width: 340px;
-        }
-
-        .next-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 1rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            text-decoration: none;
             cursor: pointer;
-            transition: all 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
         }
+        .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 1.4rem; margin-bottom: 4px; }
 
-        .next-btn:active {
-            transform: scale(0.96);
-            filter: brightness(1.1);
-        }
-
-        /* Анимация свайпа при клике */
-        .swipe-right {
-            transform: translateX(120%) rotate(20deg) !important;
-            opacity: 0;
-        }
+        /* Интерфейс Tinder (экран поиска) */
+        .tinder-card { width: 100%; max-width: 340px; margin: 0 auto; background: var(--card-bg); border-radius: 24px; overflow: hidden; }
+        .tinder-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
+        .tinder-info { padding: 15px; text-align: center; }
+        .tinder-btns { display: flex; justify-content: space-around; padding: 15px; }
+        .btn-circle { width: 60px; height: 60px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; }
+        .btn-dislike { background: #ef444422; color: #ef4444; border: 2px solid #ef4444; }
+        .btn-like { background: #22c55e22; color: #22c55e; border: 2px solid #22c55e; }
     </style>
 </head>
 <body>
 
-    <div class="card-container">
-        <div id="movie-card" class="card">
-            <div class="poster-wrapper">
-                <img id="poster" src="" alt="">
+    <div id="home-screen" class="screen active">
+        <h1>Выбор режима</h1>
+        <div class="mode-card" onclick="startSearch('solo')">
+            <div class="mode-icon">🍿</div>
+            <div class="mode-info">
+                <h3>Один</h3>
+                <p>Листай фильмы и выбирай под настроение</p>
             </div>
-            <div class="info">
-                <h2 id="title">Загружаем магию...</h2>
+        </div>
+        <div class="mode-card" onclick="showSupport()">
+            <div class="mode-icon">👫</div>
+            <div class="mode-info">
+                <h3>Вдвоем</h3>
+                <p>Найди фильм, который понравится обоим</p>
             </div>
         </div>
     </div>
 
-    <div class="controls">
-        <button class="next-btn" onclick="nextMovie()">СЛЕДУЮЩИЙ</button>
+    <div id="search-screen" class="screen">
+        <div class="tinder-card">
+            <img id="poster" src="" alt="">
+            <div class="tinder-info"><h2 id="title">Загрузка...</h2></div>
+            <div class="tinder-btns">
+                <button class="btn-circle btn-dislike" onclick="loadMovie()">✖</button>
+                <button class="btn-circle btn-like" onclick="handleLike()">❤</button>
+            </div>
+        </div>
     </div>
+
+    <div id="profile-screen" class="screen">
+        <h1>Личный кабинет</h1>
+        <div class="mode-card">
+            <div class="mode-info">
+                <h3 id="user-name">Пользователь</h3>
+                <p id="user-id">ID: 000000</p>
+            </div>
+        </div>
+        <h3>Твои лайки ❤️</h3>
+        <div id="likes-list" style="color: var(--text-dim)">Здесь появятся ваши фильмы...</div>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <span class="nav-icon">🏠</span>
+            <span>Главная</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile', this)">
+            <span class="nav-icon">👤</span>
+            <span>Профиль</span>
+        </div>
+        <div class="nav-item" onclick="showSupport()">
+            <span class="nav-icon">🛠</span>
+            <span>Поддержка</span>
+        </div>
+    </nav>
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.ready(); // Сообщает Telegram, что приложение полностью загружено
         tg.expand();
-        tg.headerColor = '#0f172a';
+        
+        const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/"; 
 
-        // --- ВАЖНО: ТВОЯ ССЫЛКА NGROK ---
-        const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev";
+        function switchTab(screen, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(screen + '-screen').classList.add('active');
+            el.classList.add('active');
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function startSearch(mode) {
+            switchTab('search', document.querySelectorAll('.nav-item')[0]);
+            loadMovie();
+        }
+
+        function showSupport() {
+            tg.showAlert("Поддержка: @твой_логин_в_тг\nРежим 'Вдвоем' в разработке!");
+        }
 
         async function loadMovie() {
-    const card = document.getElementById('movie-card');
-    const poster = document.getElementById('poster');
-    const title = document.getElementById('title');
-
-    card.classList.add('loading');
-    poster.classList.remove('loaded');
-
-    try {
-        const response = await fetch(`${API_BASE}/get_movie`, {
-            headers: { 'ngrok-skip-browser-warning': 'true' }
-        });
-        const data = await response.json();
-
-        if (data.title) {
-            title.innerText = data.title;
-            // Теперь постер грузится напрямую с серверов Кинопоиска!
-            poster.src = data.poster; 
-            
-            poster.onload = () => {
-                poster.classList.add('loaded');
-                card.classList.remove('loading');
-            };
-        }
-    } catch (e) {
-        title.innerText = "Ошибка API 📡";
-    }
-}
-
-        function nextMovie() {
-            // Вибрация (Haptic Feedback)
-            tg.HapticFeedback.impactOccurred('medium');
-
-            const card = document.getElementById('movie-card');
-            card.classList.add('swipe-right');
-
-            setTimeout(() => {
-                card.classList.remove('swipe-right');
-                loadMovie();
-            }, 300);
+            const title = document.getElementById('title');
+            const poster = document.getElementById('poster');
+            title.innerText = "Ищем...";
+            try {
+                const r = await fetch(`${API_BASE}/get_movie`, {headers: {'ngrok-skip-browser-warning': 'true'}});
+                const data = await r.json();
+                title.innerText = data.title;
+                poster.src = data.poster;
+            } catch (e) { title.innerText = "Ошибка API"; }
         }
 
-        // Первый запуск
-        loadMovie();
+        function handleLike() {
+            tg.HapticFeedback.notificationOccurred('success');
+            // Тут позже добавим fetch на /like
+            tg.showScanQrPopup({text: "Сохранено!"}); 
+            setTimeout(() => { tg.closeScanQrPopup(); loadMovie(); }, 500);
+        }
+
+        // Заполняем профиль
+        document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Киноман";
+        document.getElementById('user-id').innerText = "ID: " + (tg.initDataUnsafe.user?.id || "Неизвестно");
     </script>
 </body>
-
 </html>
-
-
-
