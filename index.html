@@ -154,6 +154,23 @@
     </nav>
 
     <script>
+        
+        // Функция "прогрева" связи
+async function pingServer() {
+    try {
+        await fetch(`${API_BASE}/get_movie?ping=${Date.now()}`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' },
+            signal: AbortSignal.timeout(3000)
+        });
+        console.log("Связь установлена");
+    } catch (e) {
+        console.log("Сервер еще не проснулся...");
+    }
+}
+
+// Запускаем прогрев сразу при открытии
+pingServer();
+
         let tg = window.Telegram.WebApp;
         tg.expand();
 
