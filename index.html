@@ -113,6 +113,19 @@
         </div>
     </div>
 
+    <div id="duo-menu-screen" class="screen">
+    <h1>Режим вдвоем</h1>
+    <div class="mode-card" onclick="createRoom()">
+        <div class="mode-icon">➕</div>
+        <div class="mode-info"><h3>Создать комнату</h3><p>Получи код и отправь другу</p></div>
+    </div>
+    <div class="mode-card" onclick="promptJoinRoom()">
+        <div class="mode-icon">🔑</div>
+        <div class="mode-info"><h3>Войти по коду</h3><p>Введи код, который прислал друг</p></div>
+    </div>
+    <button class="next-btn" style="background:#475569" onclick="switchTab('home', this)">Назад</button>
+</div>
+
     <div id="profile-screen" class="screen">
         <h1>Личный кабинет</h1>
         <div class="mode-card">
@@ -195,6 +208,46 @@ async function loadMovie() {
     }
 }
 
+// Переключаем на меню выбора при клике на "Вдвоем" в главном меню
+function showDuoMenu() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('duo-menu-screen').classList.add('active');
+}
+
+// Создание комнаты
+async function createRoom() {
+    const user_id = tg.initDataUnsafe.user?.id;
+    const response = await fetch(`${API_BASE}/create_room`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+        body: JSON.stringify({user_id: user_id})
+    });
+    const data = await response.json();
+    tg.showAlert(`Комната создана! Код: ${data.room_id}\nСообщите его партнеру.`);
+    // Здесь можно запустить интервал проверки, зашел ли второй игрок
+}
+
+// Присоединение
+function promptJoinRoom() {
+    const code = prompt("Введите 4-значный код комнаты:");
+    if (code) joinRoom(code);
+}
+
+async function joinRoom(code) {
+    const user_id = tg.initDataUnsafe.user?.id;
+    const response = await fetch(`${API_BASE}/join_room`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+        body: JSON.stringify({user_id: user_id, room_id: code})
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+        tg.showAlert("Вы успешно вошли! Начинаем поиск...");
+        startSearch('duo');
+    } else {
+        tg.showAlert(data.message);
+    }
+}
 
         async function handleLike() {
             tg.HapticFeedback.notificationOccurred('success');
