@@ -103,7 +103,7 @@
         .tinder-card {
             width: 100%;
             max-width: 380px;
-            height: 81vh; /* Максимальная высота до меню */
+            height: 81vh;
             background: var(--card-bg);
             border-radius: 32px;
             overflow: hidden;
@@ -115,11 +115,30 @@
             position: relative;
         }
 
-        .tinder-img {
+        /* Контейнер для изображения с эффектом размытия */
+        .poster-wrapper {
             width: 100%;
             height: 55%;
-            object-fit: contain; /* Теперь изображение не обрезается, а вписывается целиком */
-            background-color: #000; /* Фон для пустых мест, если постер узкий */
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .poster-blur {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: blur(20px) brightness(0.5);
+            transform: scale(1.2); /* Чтобы убрать белые края от блюра */
+        }
+
+        .tinder-img {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 1;
             opacity: 0;
             transition: opacity 0.5s ease;
         }
@@ -201,7 +220,10 @@
 
     <div id="search-screen" class="screen">
         <div class="tinder-card">
-            <img id="poster" class="tinder-img" src="" alt="">
+            <div class="poster-wrapper">
+                <img id="poster-blur" class="poster-blur" src="" alt="">
+                <img id="poster" class="tinder-img" src="" alt="">
+            </div>
             <div class="tinder-info-container">
                 <div id="rating" class="rating-badge">0.0</div>
                 <div class="tinder-info"><h2 id="title">Загрузка...</h2></div>
@@ -279,7 +301,7 @@
         }
 
         function showSupport() {
-            tg.showAlert("🍿 MovieMatch v2.0\n\nИзображения больше не обрезаются. Карточка растянута до меню.");
+            tg.showAlert("🍿 MovieMatch v2.1\n\nЧерные рамки заменены на атмосферное размытие.");
         }
 
         async function loadMovie() {
@@ -287,6 +309,7 @@
 
             const title = document.getElementById('title');
             const poster = document.getElementById('poster');
+            const posterBlur = document.getElementById('poster-blur');
             const desc = document.getElementById('desc');
             const rating = document.getElementById('rating');
             const meta = document.getElementById('meta');
@@ -308,6 +331,7 @@
 
                 title.innerText = data.title;
                 poster.src = data.poster;
+                posterBlur.src = data.poster;
                 
                 desc.innerText = data.description || "Описание временно недоступно.";
                 rating.innerText = data.rating || "?.?";
