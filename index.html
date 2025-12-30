@@ -202,10 +202,10 @@
         .stat-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; text-align: center; }
         .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
         .stat-lbl { font-size: 0.8rem; color: var(--text-dim); }
-        
+
         .ticket-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .ticket-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
-        
+
         textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 12px; margin: 10px 0; font-family: inherit; box-sizing: border-box; }
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
@@ -278,7 +278,7 @@
     <!-- ЭКРАН АДМИНКИ (НОВЫЙ) -->
     <div id="admin-screen" class="screen">
         <h1>🛠 Админка</h1>
-        
+
         <div class="stat-grid">
             <div class="stat-item"><div id="adm-users" class="stat-val">0</div><div class="stat-lbl">Юзеры</div></div>
             <div class="stat-item"><div id="adm-likes" class="stat-val">0</div><div class="stat-lbl">Лайки</div></div>
@@ -295,7 +295,7 @@
             <button onclick="loadAdminData()" style="background:none; border:none; color:var(--accent); font-size:1.2rem;">🔄</button>
         </div>
         <div id="tickets-list"></div>
-        
+
         <button class="action-btn" style="background: rgba(255,255,255,0.1); color: #fff; margin-top: 30px;" onclick="switchTab('home')">Выйти из админки</button>
     </div>
 
@@ -329,18 +329,39 @@
         let currentMovieId = null;
 
         // --- ПРОВЕРКА АДМИНА ПРИ СТАРТЕ ---
+                // ЗАМЕНИТЕ СТАРУЮ ФУНКЦИЮ checkAdmin НА ЭТУ:
         async function checkAdmin() {
             const user_id = tg.initDataUnsafe.user?.id;
-            if (!user_id) return;
+            
+            // Отладка 1: Показываем ваш ID
+            if (!user_id) {
+                tg.showAlert("Ошибка: Не могу определить ваш Telegram ID. Вы открыли это в браузере?");
+                return;
+            }
+            
             try {
+                // Отладка 2: Пробуем постучаться на сервер
                 const res = await fetch(`${API_BASE}/admin/check/${user_id}`);
-                const data = await res.json();
-                if (data.is_admin) {
-                    // Показываем кнопку только если админ
-                    document.getElementById('nav-admin').style.display = 'flex';
+                
+                if (!res.ok) {
+                    tg.showAlert("Ошибка сервера: " + res.status);
+                    return;
                 }
-            } catch (e) { console.error("Admin check failed", e); }
+
+                const data = await res.json();
+                
+                // Отладка 3: Что ответил сервер?
+                if (data.is_admin) {
+                    tg.showAlert("Ура! Вы админ. Включаю кнопку.");
+                    document.getElementById('nav-admin').style.display = 'flex';
+                } else {
+                    tg.showAlert(`Сервер говорит, что ID ${user_id} — не админ.`);
+                }
+            } catch (e) { 
+                tg.showAlert("Ошибка соединения: " + e.message); 
+            }
         }
+
         // Запускаем проверку
         checkAdmin();
 
@@ -372,7 +393,7 @@
                 const t_res = await fetch(`${API_BASE}/admin/tickets/${user_id}`);
                 const tickets = await t_res.json();
                 const list = document.getElementById('tickets-list');
-                
+
                 if (tickets.length === 0) {
                     list.innerHTML = '<div style="text-align:center; color:gray; padding:20px;">Нет новых обращений</div>';
                 } else {
@@ -390,8 +411,8 @@
                         </div>
                     `).join('');
                 }
-            } catch (e) { 
-                tg.showAlert("Ошибка доступа к админ-панели"); 
+            } catch (e) {
+                tg.showAlert("Ошибка доступа к админ-панели");
             }
         }
 
@@ -415,7 +436,7 @@
             const text = document.getElementById('broadcast-text').value;
             const user_id = tg.initDataUnsafe.user?.id;
             if (!text) return tg.showAlert("Введите текст!");
-            
+
             if (!confirm("Вы уверены, что хотите отправить это сообщение ВСЕМ пользователям?")) return;
 
             try {
