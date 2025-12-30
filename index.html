@@ -92,105 +92,58 @@
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
 
-                                /* --- НЕОНОВАЯ ЕЛКА (V2 - УПРОЩЕННЫЙ КОД) --- */
-        .neon-widget {
-            margin-top: auto; 
+                                        /* --- НОВОГОДНЯЯ КИНОПЛЕНКА (SVG) --- */
+        .holiday-footer {
+            flex: 1; /* Занимает всё свободное место */
             width: 100%;
-            height: 220px; 
+            min-height: 180px; /* Минимальная высота, чтобы не сплющило */
+            margin-top: auto; /* Прижимает к низу */
             position: relative;
             display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            padding-bottom: 85px; 
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
             overflow: hidden;
-            /* Радиальный градиент фона */
-            background: radial-gradient(circle at bottom, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+            padding-bottom: 80px; /* Отступ от навигации */
         }
 
-        /* Треугольник (Тело елки) */
-        .neon-tree {
-            position: relative;
-            width: 0; height: 0;
-            /* Рисуем треугольник границами */
-            border-left: 50px solid transparent;
-            border-right: 50px solid transparent;
-            border-bottom: 140px solid rgba(74, 222, 128, 0.1); /* Полупрозрачный зеленый */
+        /* Текст поздравления */
+        .holiday-title {
+            font-size: 1rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #facc15, #f87171, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            z-index: 2;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Сама картинка */
+        .film-svg {
+            width: 110%; /* Чуть шире экрана для красивого изгиба */
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
             z-index: 1;
         }
-        
-        /* Светящийся контур (через тень, это надежнее масок) */
-        .neon-tree::after {
-            content: '';
-            position: absolute;
-            left: -50px; top: 0;
-            width: 0; height: 0;
-            border-left: 50px solid transparent;
-            border-right: 50px solid transparent;
-            border-bottom: 140px solid transparent;
-            /* Создаем эффект свечения снизу */
-            box-shadow: 0 10px 20px rgba(74, 222, 128, 0.4); 
+
+        /* Анимация огоньков (управляется через CSS классы внутри SVG) */
+        .bulb {
+            animation: blink 2s infinite alternate;
+        }
+        .bulb-red { fill: #ef4444; animation-delay: 0s; }
+        .bulb-gold { fill: #fbbf24; animation-delay: 0.5s; }
+        .bulb-blue { fill: #3b82f6; animation-delay: 1s; }
+        .bulb-green { fill: #4ade80; animation-delay: 1.5s; }
+
+        /* Эффект свечения */
+        @keyframes blink {
+            0% { opacity: 0.4; filter: blur(0px); }
+            100% { opacity: 1; filter: blur(2px); }
         }
         
-        /* Дополнительные линии (ветки) */
-        .neon-tree::before {
-            content: '';
-            position: absolute;
-            top: 20px; left: -40px;
-            width: 80px; height: 2px;
-            background: rgba(74, 222, 128, 0.3);
-            box-shadow: 0 40px 0 rgba(74, 222, 128, 0.3), 
-                        0 80px 0 rgba(74, 222, 128, 0.3);
-        }
-
-
-        /* Звезда */
-        .neon-star {
-            position: absolute;
-            top: -160px; /* Высота над елкой */
-            font-size: 2rem;
-            color: #fbbf24;
-            text-shadow: 0 0 15px #fbbf24, 0 0 30px #f59e0b;
-            animation: pulse 2s infinite ease-in-out;
-            z-index: 2;
-        }
-
-        /* Гирлянда (шарики) */
-        .orb {
-            position: absolute;
-            width: 8px; height: 8px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px currentColor;
-            animation: glow 1.5s infinite alternate;
-        }
-
-        /* Текст */
-        .neon-text {
-            position: absolute;
-            bottom: 30px;
-            text-align: center;
-            width: 100%;
-            z-index: 10;
-        }
-        .neon-text h4 { margin: 0; font-size: 1.1rem; color: #e2e8f0; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .neon-text span { font-size: 0.8rem; color: #94a3b8; }
-
-        /* Анимация снега */
-        .snow-particle {
-            position: absolute;
-            top: -10px;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.6;
-            animation: fall linear infinite;
-        }
-
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.2); opacity: 1; } }
-        @keyframes glow { from { opacity: 0.5; transform: scale(0.8); } to { opacity: 1; transform: scale(1.2); } }
-        @keyframes fall { to { transform: translateY(250px); } }
-
-
-
     </style>
 </head>
 <body>
@@ -199,30 +152,41 @@
         <h1>MovieMatch</h1>
         <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
         <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
-                         <!-- 👇👇👇 НЕОНОВАЯ ЕЛКА (БЕЗ КАРТИНОК) 👇👇👇 -->
-        <div class="neon-widget">
-            <!-- Снег (генерируем точками) -->
-            <div class="snow-particle" style="left: 10%; width: 3px; height: 3px; animation-duration: 4s;"></div>
-            <div class="snow-particle" style="left: 30%; width: 4px; height: 4px; animation-duration: 6s; animation-delay: 1s;"></div>
-            <div class="snow-particle" style="left: 60%; width: 2px; height: 2px; animation-duration: 5s; animation-delay: 2s;"></div>
-            <div class="snow-particle" style="left: 80%; width: 3px; height: 3px; animation-duration: 7s;"></div>
+                                <!-- 👇👇👇 ВИДЖЕТ: КИНОПЛЕНКА С ГИРЛЯНДОЙ 👇👇👇 -->
+        <div class="holiday-footer">
+            <div class="holiday-title">🎄 Новогоднее настроение 🎄</div>
+            
+            <!-- Векторная графика (рисуем кодом) -->
+            <svg class="film-svg" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+                <!-- 1. Кинопленка (Черная лента) -->
+                <path d="M-10,80 Q100,20 200,80 T410,80" 
+                      fill="none" stroke="#1e293b" stroke-width="40" stroke-linecap="round"/>
+                
+                <!-- 2. Перфорация пленки (Белые точки) -->
+                <!-- Верхний ряд -->
+                <path d="M-10,68 Q100,8 200,68 T410,68" 
+                      fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="4" stroke-dasharray="6 10"/>
+                <!-- Нижний ряд -->
+                <path d="M-10,92 Q100,32 200,92 T410,92" 
+                      fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="4" stroke-dasharray="6 10"/>
 
-            <div class="neon-tree">
-                <div class="neon-star">✦</div>
+                <!-- 3. Провод гирлянды (обвивает пленку) -->
+                <path d="M-10,85 Q50,30 100,85 T200,85 T300,85 T410,85" 
+                      fill="none" stroke="#166534" stroke-width="2" opacity="0.8"/>
 
-                <!-- Огоньки на елке -->
-                <div class="orb" style="top: 40px; left: -10px; color: #ef4444; animation-delay: 0s;"></div>
-                <div class="orb" style="top: 70px; left: 15px; color: #3b82f6; animation-delay: 0.5s;"></div>
-                <div class="orb" style="top: 90px; left: -25px; color: #eab308; animation-delay: 1s;"></div>
-                <div class="orb" style="top: 110px; left: 5px; color: #ec4899; animation-delay: 0.2s;"></div>
-            </div>
-
-            <div class="neon-text">
-                <h4>Новогоднее настроение</h4>
-                <span>Найди идеальный фильм на вечер</span>
-            </div>
+                <!-- 4. Лампочки (Огоньки) -->
+                <circle cx="40" cy="55" r="4" class="bulb bulb-red"/>
+                <circle cx="80" cy="65" r="4" class="bulb bulb-gold"/>
+                <circle cx="130" cy="50" r="4" class="bulb bulb-blue"/>
+                <circle cx="170" cy="60" r="4" class="bulb bulb-green"/>
+                <circle cx="220" cy="50" r="4" class="bulb bulb-red"/>
+                <circle cx="260" cy="60" r="4" class="bulb bulb-gold"/>
+                <circle cx="310" cy="50" r="4" class="bulb bulb-blue"/>
+                <circle cx="350" cy="60" r="4" class="bulb bulb-green"/>
+            </svg>
         </div>
         <!-- 👆👆👆 КОНЕЦ ВСТАВКИ 👆👆👆 -->
+
 
 
     </div>
