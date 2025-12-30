@@ -328,39 +328,36 @@
         let abortController = null;
         let currentMovieId = null;
 
-        // --- ПРОВЕРКА АДМИНА ПРИ СТАРТЕ ---
-                // ЗАМЕНИТЕ СТАРУЮ ФУНКЦИЮ checkAdmin НА ЭТУ:
+                // ЗАМЕНИТЕ ФУНКЦИЮ checkAdmin НА ЭТУ:
         async function checkAdmin() {
             const user_id = tg.initDataUnsafe.user?.id;
-
-            // Отладка 1: Показываем ваш ID
-            if (!user_id) {
-                tg.showAlert("Ошибка: Не могу определить ваш Telegram ID. Вы открыли это в браузере?");
-                return;
-            }
+            if (!user_id) return;
 
             try {
-                // Отладка 2: Пробуем постучаться на сервер
-                const res = await fetch(`${API_BASE}/admin/check/${user_id}`);
+                // ДОБАВЛЕН HEADER 'ngrok-skip-browser-warning'
+                const res = await fetch(`${API_BASE}/admin/check/${user_id}`, {
+                    headers: { 
+                        'ngrok-skip-browser-warning': 'true',
+                        'Content-Type': 'application/json'
+                    }
+                });
 
+                // Если сервер вернул ошибку (не 200 OK)
                 if (!res.ok) {
-                    tg.showAlert("Ошибка сервера: " + res.status);
+                    console.error("Server Error:", res.status);
                     return;
                 }
 
                 const data = await res.json();
-
-                // Отладка 3: Что ответил сервер?
+                
                 if (data.is_admin) {
-                    tg.showAlert("Ура! Вы админ. Включаю кнопку.");
                     document.getElementById('nav-admin').style.display = 'flex';
-                } else {
-                    tg.showAlert(`Сервер говорит, что ID ${user_id} — не админ.`);
                 }
-            } catch (e) {
-                tg.showAlert("Ошибка соединения: " + e.message);
+            } catch (e) { 
+                console.error("Admin check failed", e); 
             }
         }
+
 
         // Запускаем проверку
         checkAdmin();
