@@ -196,13 +196,87 @@
             50% { opacity: 0.8; }
             100% { transform: translateY(-50px); opacity: 0; }
         }
+                /* --- НЕОНОВАЯ ГИРЛЯНДА --- */
+
+        /* Контейнер для лампочек */
+        .garland-wrap {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            z-index: 2000;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        /* Позиция для Меню (сверху) */
+        .garland-nav {
+            top: -6px;
+        }
+
+        /* Позиция для Заголовка (снизу, дугой) */
+        .garland-title {
+            bottom: -5px;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        /* Сама лампочка */
+        .bulb {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #444; /* Выключенная */
+            animation: flash 1.5s infinite alternate;
+            position: relative;
+        }
+
+        /* Провод (маленькая палочка над лампочкой) */
+        .bulb::before {
+            content: '';
+            position: absolute;
+            top: -3px; left: 2px;
+            width: 2px; height: 4px;
+            background: #222;
+        }
+
+        /* Цвета и свечение */
+        .b-red { background: #ff0055; box-shadow: 0 0 10px #ff0055; animation-delay: 0s; }
+        .b-green { background: #00ff99; box-shadow: 0 0 10px #00ff99; animation-delay: 0.5s; }
+        .b-blue { background: #00ccff; box-shadow: 0 0 10px #00ccff; animation-delay: 1s; }
+        .b-gold { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; animation-delay: 0.2s; }
+
+        @keyframes flash {
+            0% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Спецэффект для заголовка (чтобы лампочки висели дугой) */
+        .garland-title .bulb:nth-child(1) { transform: translateY(-5px); }
+        .garland-title .bulb:nth-child(2) { transform: translateY(-2px); }
+        .garland-title .bulb:nth-child(3) { transform: translateY(0px); }
+        .garland-title .bulb:nth-child(4) { transform: translateY(-2px); }
+        .garland-title .bulb:nth-child(5) { transform: translateY(-5px); }
 
     </style>
 </head>
 <body>
 
     <div id="home-screen" class="screen active">
-        <h1>MovieMatch</h1>
+                <div style="position: relative; width: fit-content; margin: 0 auto 24px;">
+            <h1 style="margin: 0;">MovieMatch</h1>
+            <!-- Гирлянда под текстом -->
+            <div class="garland-wrap garland-title">
+                <div class="bulb b-red"></div>
+                <div class="bulb b-gold"></div>
+                <div class="bulb b-green"></div>
+                <div class="bulb b-blue"></div>
+                <div class="bulb b-red"></div>
+            </div>
+        </div>
+
         <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
         <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
         <!-- 👇👇👇 ВИДЖЕТ-КАРТОЧКА: CINEMATIC AURORA 👇👇👇 -->
@@ -305,12 +379,32 @@
         <button class="action-btn" style="background: rgba(255,255,255,0.1); color: #fff; margin-top: 30px;" onclick="switchTab('home')">Выйти из админки</button>
     </div>
 
-    <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('home', this)"><span class="nav-icon">🏠</span><span>Главная</span></div>
-        <div class="nav-item" onclick="switchTab('profile', this)"><span class="nav-icon">👤</span><span>Профиль</span></div>
-        <div class="nav-item" onclick="switchTab('support', this)"><span class="nav-icon">📩</span><span>Помощь</span></div>
-        <div id="nav-admin" class="nav-item" style="display: none; color: #ff4b4b;" onclick="switchTab('admin', this)"><span class="nav-icon">🔑</span><span>Админ</span></div>
+        <nav class="nav-bar">
+        <!-- Гирлянда на верхней грани меню -->
+        <div class="garland-wrap garland-nav">
+            <div class="bulb b-green"></div>
+            <div class="bulb b-red"></div>
+            <div class="bulb b-blue"></div>
+            <div class="bulb b-gold"></div>
+            <div class="bulb b-green"></div>
+            <div class="bulb b-red"></div>
+            <div class="bulb b-blue"></div>
+        </div>
+
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <span class="nav-icon">🏠</span><span>Главная</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile', this)">
+            <span class="nav-icon">👤</span><span>Профиль</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('support', this)">
+            <span class="nav-icon">📩</span><span>Помощь</span>
+        </div>
+        <div id="nav-admin" class="nav-item" style="display: none; color: #ff4b4b;" onclick="switchTab('admin', this)">
+            <span class="nav-icon">🔑</span><span>Админ</span>
+        </div>
     </nav>
+
 
     <script>
         let tg = window.Telegram.WebApp;
