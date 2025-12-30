@@ -196,6 +196,19 @@
             padding: 16px; border-radius: 18px; width: 100%;
             font-weight: 700; font-size: 1rem; margin-top: 12px;
         }
+
+        /* --- НОВЫЕ СТИЛИ АДМИНКИ --- */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; text-align: center; }
+        .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+        .stat-lbl { font-size: 0.8rem; color: var(--text-dim); }
+        
+        .ticket-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .ticket-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
+        
+        textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 12px; margin: 10px 0; font-family: inherit; box-sizing: border-box; }
+        .reply-box { display: flex; gap: 10px; margin-top: 10px; }
+        .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
     </style>
 </head>
 <body>
@@ -262,6 +275,30 @@
         <div id="likes-list"></div>
     </div>
 
+    <!-- ЭКРАН АДМИНКИ (НОВЫЙ) -->
+    <div id="admin-screen" class="screen">
+        <h1>🛠 Админка</h1>
+        
+        <div class="stat-grid">
+            <div class="stat-item"><div id="adm-users" class="stat-val">0</div><div class="stat-lbl">Юзеры</div></div>
+            <div class="stat-item"><div id="adm-likes" class="stat-val">0</div><div class="stat-lbl">Лайки</div></div>
+            <div class="stat-item"><div id="adm-rooms" class="stat-val">0</div><div class="stat-lbl">Комнаты</div></div>
+            <div class="stat-item"><div id="adm-tickets" class="stat-val">0</div><div class="stat-lbl">Тикеты</div></div>
+        </div>
+
+        <h3>📢 Рассылка</h3>
+        <textarea id="broadcast-text" rows="3" placeholder="Введите текст для всех пользователей..."></textarea>
+        <button class="action-btn" onclick="sendBroadcast()">🚀 Отправить всем</button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:30px; margin-bottom:10px;">
+            <h3>📩 Тикеты</h3>
+            <button onclick="loadAdminData()" style="background:none; border:none; color:var(--accent); font-size:1.2rem;">🔄</button>
+        </div>
+        <div id="tickets-list"></div>
+        
+        <button class="action-btn" style="background: rgba(255,255,255,0.1); color: #fff; margin-top: 30px;" onclick="switchTab('home')">Выйти из админки</button>
+    </div>
+
     <nav class="nav-bar">
         <div class="nav-item active" onclick="switchTab('home', this)">
             <span class="nav-icon">🏠</span><span>Главная</span>
@@ -271,6 +308,10 @@
         </div>
         <div class="nav-item" onclick="showSupport()">
             <span class="nav-icon">🛠</span><span>Помощь</span>
+        </div>
+        <!-- СКРЫТАЯ КНОПКА АДМИНА -->
+        <div id="nav-admin" class="nav-item" style="display: none; color: #ff4b4b;" onclick="switchTab('admin', this)">
+            <span class="nav-icon">🔑</span><span>Админ</span>
         </div>
     </nav>
 
@@ -285,7 +326,24 @@
 
         let isLoading = false;
         let abortController = null;
-        let currentMovieId = null; // Переменная для хранения ID текущего фильма
+        let currentMovieId = null;
+
+        // --- ПРОВЕРКА АДМИНА ПРИ СТАРТЕ ---
+        async function checkAdmin() {
+            const user_id = tg.initDataUnsafe.user?.id;
+            if (!user_id) return;
+            try {
+                const res = await fetch(`${API_BASE}/admin/check/${user_id}`);
+                const data = await res.json();
+                if (data.is_admin) {
+                    // Показываем кнопку только если админ
+                    document.getElementById('nav-admin').style.display = 'flex';
+                }
+            } catch (e) { console.error("Admin check failed", e); }
+        }
+        // Запускаем проверку
+        checkAdmin();
+
 
         function switchTab(screen, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -294,9 +352,86 @@
             if (el) el.classList.add('active');
 
             if (screen === 'profile') loadMyLikes();
+            if (screen === 'admin') loadAdminData(); // Загружаем данные админки
             tg.HapticFeedback.impactOccurred('medium');
         }
 
+        // --- ЛОГИКА АДМИНКИ ---
+        async function loadAdminData() {
+            const user_id = tg.initDataUnsafe.user?.id;
+            try {
+                // Статистика
+                const s_res = await fetch(`${API_BASE}/admin/stats/${user_id}`);
+                const stats = await s_res.json();
+                document.getElementById('adm-users').innerText = stats.users;
+                document.getElementById('adm-likes').innerText = stats.likes;
+                document.getElementById('adm-rooms').innerText = stats.rooms;
+                document.getElementById('adm-tickets').innerText = stats.tickets;
+
+                // Тикеты
+                const t_res = await fetch(`${API_BASE}/admin/tickets/${user_id}`);
+                const tickets = await t_res.json();
+                const list = document.getElementById('tickets-list');
+                
+                if (tickets.length === 0) {
+                    list.innerHTML = '<div style="text-align:center; color:gray; padding:20px;">Нет новых обращений</div>';
+                } else {
+                    list.innerHTML = tickets.map(t => `
+                        <div class="ticket-card">
+                            <div class="ticket-header">
+                                <span>ID: ${t.user_id}</span>
+                                <span>${t.created_at}</span>
+                            </div>
+                            <div style="margin-bottom:10px; font-style:italic;">"${t.message}"</div>
+                            <div class="reply-box">
+                                <input type="text" id="reply-${t.id}" class="reply-input" placeholder="Ответ...">
+                                <button onclick="replyTicket(${t.id})" style="background:var(--accent); border:none; border-radius:8px; padding:0 15px; font-weight:bold;">➜</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { 
+                tg.showAlert("Ошибка доступа к админ-панели"); 
+            }
+        }
+
+        async function replyTicket(ticketId) {
+            const text = document.getElementById(`reply-${ticketId}`).value;
+            const user_id = tg.initDataUnsafe.user?.id;
+            if (!text) return;
+
+            try {
+                await fetch(`${API_BASE}/admin/reply_ticket`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ admin_id: user_id, ticket_id: ticketId, text: text })
+                });
+                tg.showAlert("✅ Ответ отправлен!");
+                loadAdminData(); // Обновляем список
+            } catch (e) { tg.showAlert("Ошибка отправки"); }
+        }
+
+        async function sendBroadcast() {
+            const text = document.getElementById('broadcast-text').value;
+            const user_id = tg.initDataUnsafe.user?.id;
+            if (!text) return tg.showAlert("Введите текст!");
+            
+            if (!confirm("Вы уверены, что хотите отправить это сообщение ВСЕМ пользователям?")) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/broadcast`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ admin_id: user_id, text: text })
+                });
+                const data = await res.json();
+                tg.showAlert(`Рассылка запущена! Доставлено (примерно): ${data.sent}`);
+                document.getElementById('broadcast-text').value = "";
+            } catch (e) { tg.showAlert("Ошибка рассылки"); }
+        }
+
+
+        // --- СТАРЫЕ ФУНКЦИИ ---
         function startSearch(mode) {
             switchTab('search', document.querySelectorAll('.nav-item')[0]);
             loadMovie();
@@ -370,11 +505,11 @@
                 await fetch(`${API_BASE}/like`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-                    body: JSON.stringify({ 
-                        user_id: user_id, 
+                    body: JSON.stringify({
+                        user_id: user_id,
                         movie_id: currentMovieId, // Отправляем ID
-                        movie_title: titleText, 
-                        poster_url: posterUrl 
+                        movie_title: titleText,
+                        poster_url: posterUrl
                     })
                 });
                 isLoading = false;
