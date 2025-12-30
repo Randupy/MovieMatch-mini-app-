@@ -332,24 +332,24 @@
                 // ЗАМЕНИТЕ СТАРУЮ ФУНКЦИЮ checkAdmin НА ЭТУ:
         async function checkAdmin() {
             const user_id = tg.initDataUnsafe.user?.id;
-            
+
             // Отладка 1: Показываем ваш ID
             if (!user_id) {
                 tg.showAlert("Ошибка: Не могу определить ваш Telegram ID. Вы открыли это в браузере?");
                 return;
             }
-            
+
             try {
                 // Отладка 2: Пробуем постучаться на сервер
                 const res = await fetch(`${API_BASE}/admin/check/${user_id}`);
-                
+
                 if (!res.ok) {
                     tg.showAlert("Ошибка сервера: " + res.status);
                     return;
                 }
 
                 const data = await res.json();
-                
+
                 // Отладка 3: Что ответил сервер?
                 if (data.is_admin) {
                     tg.showAlert("Ура! Вы админ. Включаю кнопку.");
@@ -357,8 +357,8 @@
                 } else {
                     tg.showAlert(`Сервер говорит, что ID ${user_id} — не админ.`);
                 }
-            } catch (e) { 
-                tg.showAlert("Ошибка соединения: " + e.message); 
+            } catch (e) {
+                tg.showAlert("Ошибка соединения: " + e.message);
             }
         }
 
