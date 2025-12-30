@@ -10,210 +10,71 @@
             --surface: rgba(30, 41, 59, 0.7);
             --card-bg: #1e293b;
             --accent: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.3);
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
             --grad: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             --danger: #ff4b4b;
             --success: #00e676;
         }
-
-        body {
-            background: var(--grad);
-            color: var(--text-main);
-            font-family: 'Inter', -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .screen {
-            display: none;
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        body { background: var(--grad); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        .screen { display: none; padding: 20px; flex: 1; overflow-y: auto; animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .active { display: flex; flex-direction: column; }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
         h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 24px; text-align: center; }
-
-        .mode-card {
-            background: var(--surface);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .mode-card:active { transform: scale(0.96); background: rgba(255,255,255,0.1); }
-        .mode-icon {
-            font-size: 2.2rem;
-            background: rgba(255,255,255,0.05);
-            width: 64px; height: 64px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 18px;
-        }
+        
+        .mode-card { background: var(--surface); backdrop-filter: blur(12px); border-radius: 24px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 20px; cursor: pointer; transition: all 0.2s; }
+        .mode-card:active { transform: scale(0.96); background: rgba(255,255,255,0.15); }
+        .mode-icon { font-size: 2.2rem; background: rgba(255,255,255,0.05); width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 18px; }
         .mode-info h3 { margin: 0; font-size: 1.2rem; font-weight: 700; }
         .mode-info p { margin: 4px 0 0; font-size: 0.9rem; color: var(--text-dim); line-height: 1.4; }
 
-        .nav-bar {
-            position: fixed;
-            bottom: 15px;
-            left: 15px;
-            right: 15px;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: space-around;
-            padding: 12px;
-            border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            z-index: 1000;
-        }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center;
-            color: var(--text-dim); font-size: 0.7rem; text-decoration: none;
-            transition: 0.3s; width: 60px;
-        }
+        /* Навигация */
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 12px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-dim); font-size: 0.7rem; transition: 0.3s; width: 60px; }
         .nav-item.active { color: var(--accent); transform: translateY(-2px); }
         .nav-icon { font-size: 1.5rem; margin-bottom: 4px; }
 
-        #search-screen {
-            padding: 10px 10px 0 10px;
-            justify-content: flex-start;
-        }
-
-        .tinder-card {
-            width: 100%;
-            max-width: 380px;
-            height: 81vh;
-            background: var(--card-bg);
-            border-radius: 32px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            display: flex;
-            flex-direction: column;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        /* Контейнер для изображения с эффектом размытия */
-        .poster-wrapper {
-            width: 100%;
-            height: 55%;
-            position: relative;
-            overflow: hidden;
-            background: #000;
-        }
-
-        .poster-blur {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            filter: blur(20px) brightness(0.5);
-            transform: scale(1.2); /* Чтобы убрать белые края от блюра */
-        }
-
-        .tinder-img {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
+        /* Поиск и Карточка */
+        #search-screen { padding: 10px 10px 0 10px; }
+        .tinder-card { width: 100%; max-width: 380px; height: 81vh; background: var(--card-bg); border-radius: 32px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; margin: 0 auto; position: relative; }
+        .poster-wrapper { width: 100%; height: 55%; position: relative; overflow: hidden; background: #000; }
+        .poster-blur { position: absolute; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.5); transform: scale(1.2); }
+        .tinder-img { position: relative; width: 100%; height: 100%; object-fit: contain; z-index: 1; opacity: 0; transition: opacity 0.5s ease; }
         .tinder-img.loaded { opacity: 1; }
-
-        .tinder-info-container {
-            flex: 1;
-            padding: 15px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            background: linear-gradient(180deg, rgba(30,41,59,0) 0%, rgba(30,41,59,1) 15%);
-            margin-top: -20px;
-            position: relative;
-            z-index: 2;
-            overflow-y: auto;
-        }
-
-        .rating-badge {
-            align-self: flex-start;
-            background: var(--accent);
-            color: #000;
-            padding: 3px 10px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 0.8rem;
-            box-shadow: 0 4px 10px rgba(56, 189, 248, 0.4);
-            margin-bottom: 4px;
-        }
-
+        .tinder-info-container { flex: 1; padding: 15px 20px; display: flex; flex-direction: column; gap: 6px; background: linear-gradient(180deg, rgba(30,41,59,0) 0%, rgba(30,41,59,1) 15%); margin-top: -20px; position: relative; z-index: 2; overflow-y: auto; }
+        .rating-badge { align-self: flex-start; background: var(--accent); color: #000; padding: 3px 10px; border-radius: 8px; font-weight: 800; font-size: 0.8rem; margin-bottom: 4px; }
         .tinder-info h2 { font-size: 1.35rem; margin: 0; font-weight: 800; color: #fff; line-height: 1.2; }
         .movie-meta { font-size: 0.85rem; color: var(--text-dim); }
         .movie-desc { font-size: 0.9rem; color: #cbd5e1; line-height: 1.4; margin-top: 4px; }
-
-        .tinder-btns {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            padding: 15px 20px 20px;
-            background: rgba(15, 23, 42, 0.8);
-            z-index: 3;
-        }
-
-        .btn-circle {
-            width: 65px; height: 65px; border-radius: 50%; border: none;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; cursor: pointer; transition: 0.2s;
-        }
+        .tinder-btns { display: flex; justify-content: center; gap: 40px; padding: 15px 20px 20px; background: rgba(15, 23, 42, 0.8); z-index: 3; }
+        .btn-circle { width: 65px; height: 65px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; transition: 0.2s; }
         .btn-circle:active { transform: scale(0.85); }
-        .btn-dislike { background: #fff; color: var(--danger); box-shadow: 0 5px 15px rgba(239, 68, 68, 0.2); }
-        .btn-like { background: var(--success); color: #fff; box-shadow: 0 5px 15px rgba(0, 230, 118, 0.2); }
+        .btn-dislike { background: #fff; color: var(--danger); }
+        .btn-like { background: var(--success); color: #fff; }
+        .action-btn { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 18px; width: 100%; font-weight: 700; font-size: 1rem; margin-top: 12px; cursor: pointer; }
 
-        .action-btn {
-            background: var(--accent); color: #000; border: none;
-            padding: 16px; border-radius: 18px; width: 100%;
-            font-weight: 700; font-size: 1rem; margin-top: 12px;
-        }
-
-        /* --- НОВЫЕ СТИЛИ (ЖАНРЫ, БЕЙДЖ, КНОПКА ВЫХОДА) --- */
+        /* Жанры и прочее */
         .genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
         .genre-btn { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 15px; border-radius: 16px; text-align: center; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .genre-btn:active { background: var(--accent); color: #000; transform: scale(0.98); }
-
         .partner-badge { width: 100%; max-width: 380px; margin: 0 auto 10px; background: rgba(56, 189, 248, 0.15); color: var(--accent); padding: 10px; border-radius: 12px; text-align: center; font-weight: 700; font-size: 0.9rem; border: 1px solid rgba(56, 189, 248, 0.3); display: none; }
-
         .exit-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; z-index: 10; transition: 0.2s; }
         .exit-btn:active { transform: scale(0.9); background: var(--danger); border-color: var(--danger); }
 
-        /* Админка стили */
+        /* Админка и Тикеты */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .stat-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; text-align: center; }
         .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
         .stat-lbl { font-size: 0.8rem; color: var(--text-dim); }
+        
         .ticket-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .ticket-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
+        .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .status-open { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.4); }
+        .status-closed { background: rgba(0, 230, 118, 0.2); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.4); }
+        .admin-reply { margin-top: 10px; padding: 10px; background: rgba(56, 189, 248, 0.1); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 0.9rem; color: #e2e8f0; }
+
         textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 12px; margin: 10px 0; font-family: inherit; box-sizing: border-box; }
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
@@ -221,47 +82,23 @@
 </head>
 <body>
 
-    <!-- ЭКРАН ГЛАВНОГО МЕНЮ -->
     <div id="home-screen" class="screen active">
         <h1>MovieMatch</h1>
-        <div class="mode-card" onclick="selectMode('solo')">
-            <div class="mode-icon">🍿</div>
-            <div class="mode-info">
-                <h3>Один</h3>
-                <p>Листай подборку и выбирай свой фильм на вечер</p>
-            </div>
-        </div>
-        <div class="mode-card" onclick="showDuoMenu()">
-            <div class="mode-icon">👫</div>
-            <div class="mode-info">
-                <h3>Вдвоем</h3>
-                <p>Соединитесь с другом и найдите общий матч</p>
-            </div>
-        </div>
+        <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
+        <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
     </div>
 
-    <!-- НОВЫЙ ЭКРАН: ВЫБОР ЖАНРА -->
     <div id="genre-screen" class="screen">
         <h1>Выберите жанр</h1>
-        <div class="genre-grid" id="genre-list">
-            <!-- Кнопки генерируются JS -->
-        </div>
+        <div class="genre-grid" id="genre-list"></div>
         <button class="action-btn" style="background: rgba(255,255,255,0.1); color: #fff;" onclick="switchTab('home', document.querySelectorAll('.nav-item')[0])">Назад</button>
     </div>
 
-    <!-- ЭКРАН ПОИСКА -->
     <div id="search-screen" class="screen">
-        <!-- БЕЙДЖ ПАРТНЕРА -->
         <div id="partner-badge" class="partner-badge">В комнате с: Имя</div>
-
         <div class="tinder-card">
-            <!-- КНОПКА ВЫХОДА -->
             <div class="exit-btn" onclick="exitSearch()">✕</div>
-
-            <div class="poster-wrapper">
-                <img id="poster-blur" class="poster-blur" src="" alt="">
-                <img id="poster" class="tinder-img" src="" alt="">
-            </div>
+            <div class="poster-wrapper"><img id="poster-blur" class="poster-blur" src=""><img id="poster" class="tinder-img" src=""></div>
             <div class="tinder-info-container">
                 <div id="rating" class="rating-badge">0.0</div>
                 <div class="tinder-info"><h2 id="title">Загрузка...</h2></div>
@@ -275,31 +112,32 @@
         </div>
     </div>
 
-    <!-- МЕНЮ ДЛЯ ДВОИХ -->
     <div id="duo-menu-screen" class="screen">
         <h1>Режим для двоих</h1>
-        <!-- Теперь кнопка "Создать" ведет к выбору жанра -->
-        <div class="mode-card" onclick="selectMode('duo_create')">
-            <div class="mode-icon">✨</div>
-            <div class="mode-info"><h3>Создать комнату</h3><p>Получи уникальный код приглашения</p></div>
-        </div>
-        <div class="mode-card" onclick="promptJoinRoom()">
-            <div class="mode-icon">🔗</div>
-            <div class="mode-info"><h3>Присоединиться</h3><p>Введи код, присланный другом</p></div>
-        </div>
+        <div class="mode-card" onclick="selectMode('duo_create')"><div class="mode-icon">✨</div><div class="mode-info"><h3>Создать комнату</h3><p>Получи уникальный код приглашения</p></div></div>
+        <div class="mode-card" onclick="promptJoinRoom()"><div class="mode-icon">🔗</div><div class="mode-info"><h3>Присоединиться</h3><p>Введи код, присланный другом</p></div></div>
         <button class="action-btn" style="background: rgba(255,255,255,0.1); color: #fff;" onclick="switchTab('home', document.querySelectorAll('.nav-item')[0])">Назад</button>
     </div>
 
     <div id="profile-screen" class="screen">
         <h1>Профиль</h1>
         <div class="mode-card" style="background: linear-gradient(90deg, #38bdf8 0%, #818cf8 100%); color: #000;">
-            <div class="mode-info">
-                <h3 id="user-name" style="color: #000">Киноман</h3>
-                <p id="user-id" style="color: rgba(0,0,0,0.6)">ID: 000000</p>
-            </div>
+            <div class="mode-info"><h3 id="user-name">Киноман</h3><p id="user-id">ID: 000000</p></div>
         </div>
-        <h3 style="margin-top: 30px;">Твоя коллекция ❤️</h3>
+        <h3 style="margin-top: 30px;">Коллекция ❤️</h3>
         <div id="likes-list"></div>
+    </div>
+
+    <!-- ПОДДЕРЖКА -->
+    <div id="support-screen" class="screen">
+        <h1>Поддержка</h1>
+        <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:15px;">Опишите проблему, мы ответим в ближайшее время:</p>
+        
+        <textarea id="ticket-text" rows="4" placeholder="Введите ваше сообщение..."></textarea>
+        <button class="action-btn" onclick="createTicket()">Отправить обращение</button>
+
+        <h3 style="margin-top: 30px;">Мои обращения</h3>
+        <div id="my-tickets-list"></div>
     </div>
 
     <!-- АДМИНКА -->
@@ -323,18 +161,10 @@
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('home', this)">
-            <span class="nav-icon">🏠</span><span>Главная</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('profile', this)">
-            <span class="nav-icon">👤</span><span>Профиль</span>
-        </div>
-        <div class="nav-item" onclick="showSupport()">
-            <span class="nav-icon">📩</span><span>Помощь</span>
-        </div>
-        <div id="nav-admin" class="nav-item" style="display: none; color: #ff4b4b;" onclick="switchTab('admin', this)">
-            <span class="nav-icon">🔑</span><span>Админ</span>
-        </div>
+        <div class="nav-item active" onclick="switchTab('home', this)"><span class="nav-icon">🏠</span><span>Главная</span></div>
+        <div class="nav-item" onclick="switchTab('profile', this)"><span class="nav-icon">👤</span><span>Профиль</span></div>
+        <div class="nav-item" onclick="switchTab('support', this)"><span class="nav-icon">📩</span><span>Помощь</span></div>
+        <div id="nav-admin" class="nav-item" style="display: none; color: #ff4b4b;" onclick="switchTab('admin', this)"><span class="nav-icon">🔑</span><span>Админ</span></div>
     </nav>
 
     <script>
@@ -348,51 +178,34 @@
         let isLoading = false;
         let abortController = null;
         let currentMovieId = null;
-
-        // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
         let currentGenre = 'all';
-        let currentMode = 'solo'; // 'solo' или 'duo_create'
+        let currentMode = 'solo';
         let myRoomId = null;
         let pollingInterval = null;
 
-        // Список жанров (ID из Кинопоиска)
         const GENRES = [
-            {id: 'all', name: '🎲 Случайные'},
-            {id: '1', name: '💥 Боевик'},
-            {id: '13', name: '🤡 Комедия'},
-            {id: '17', name: '😱 Ужасы'},
-            {id: '18', name: '🎭 Драма'},
-            {id: '12', name: '🧚 Фэнтези'},
-            {id: '6', name: '🚀 Фантастика'},
-            {id: '10', name: '🤠 Вестерн'}
+            {id: 'all', name: '🎲 Случайные'}, {id: '1', name: '💥 Боевик'}, {id: '13', name: '🤡 Комедия'},
+            {id: '17', name: '😱 Ужасы'}, {id: '18', name: '🎭 Драма'}, {id: '12', name: '🧚 Фэнтези'},
+            {id: '6', name: '🚀 Фантастика'}, {id: '10', name: '🤠 Вестерн'}
         ];
 
-        // --- ИНИЦИАЛИЗАЦИЯ ---
-        // 1. Проверка админа
         async function checkAdmin() {
-            const user_id = tg.initDataUnsafe.user?.id;
-            if (!user_id) return;
+            const uid = tg.initDataUnsafe.user?.id;
+            if(!uid) return;
             try {
-                const res = await fetch(`${API_BASE}/admin/check/${user_id}`, {
-                    headers: { 'ngrok-skip-browser-warning': 'true', 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data.is_admin) document.getElementById('nav-admin').style.display = 'flex';
-            } catch (e) { console.log("Silent admin check fail"); }
+                const res = await fetch(`${API_BASE}/admin/check/${uid}`, {headers: {'ngrok-skip-browser-warning':'true'}});
+                if(res.ok) {
+                    const data = await res.json();
+                    if(data.is_admin) document.getElementById('nav-admin').style.display = 'flex';
+                }
+            } catch(e) {}
         }
         checkAdmin();
 
-        // 2. Рендер кнопок жанров
         function renderGenres() {
-            const container = document.getElementById('genre-list');
-            container.innerHTML = GENRES.map(g =>
-                `<div class="genre-btn" onclick="chooseGenre('${g.id}')">${g.name}</div>`
-            ).join('');
+            document.getElementById('genre-list').innerHTML = GENRES.map(g => `<div class="genre-btn" onclick="chooseGenre('${g.id}')">${g.name}</div>`).join('');
         }
         renderGenres();
-
-        // --- НАВИГАЦИЯ И ЛОГИКА ---
 
         function switchTab(screen, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -400,297 +213,181 @@
             document.getElementById(screen + '-screen').classList.add('active');
             if (el) el.classList.add('active');
 
-            if (screen === 'profile') loadMyLikes();
-            if (screen === 'admin') loadAdminData();
+            if(screen === 'profile') loadMyLikes();
+            if(screen === 'admin') loadAdminData();
+            if(screen === 'support') loadMyTickets();
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // Выбор режима (Один или Создать комнату)
-        function selectMode(mode) {
-            currentMode = mode;
-            switchTab('genre', document.querySelectorAll('.nav-item')[0]); // Переход к выбору жанра
+        // --- ПОДДЕРЖКА ---
+        async function createTicket() {
+            const txt = document.getElementById('ticket-text').value;
+            const uid = tg.initDataUnsafe.user?.id;
+            if(!txt) return tg.showAlert("Введите текст");
+
+            try {
+                await fetch(`${API_BASE}/create_ticket`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json', 'ngrok-skip-browser-warning':'true'},
+                    body: JSON.stringify({ user_id: uid, message: txt })
+                });
+                tg.showAlert("✅ Отправлено!");
+                document.getElementById('ticket-text').value = "";
+                loadMyTickets();
+            } catch(e) { tg.showAlert("Ошибка отправки"); }
         }
 
-        // Выбор жанра -> Старт поиска или Создание комнаты
+        async function loadMyTickets() {
+            const uid = tg.initDataUnsafe.user?.id;
+            try {
+                const res = await fetch(`${API_BASE}/my_tickets/${uid}`, {headers:{'ngrok-skip-browser-warning':'true'}});
+                const tickets = await res.json();
+                const list = document.getElementById('my-tickets-list');
+                
+                if(!tickets.length) list.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Обращений нет</div>';
+                else list.innerHTML = tickets.map(t => {
+                    const statusClass = t.status === 'open' ? 'status-open' : 'status-closed';
+                    const statusText = t.status === 'open' ? 'В обработке' : 'Ответ получен';
+                    
+                    // Блок с ответом админа
+                    let replyBlock = '';
+                    if (t.admin_reply) {
+                        replyBlock = `<div class="admin-reply"><b>Ответ поддержки:</b><br>${t.admin_reply}</div>`;
+                    }
+                    
+                    return `
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <span>${t.created_at.split(' ')[0]}</span>
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                        <div style="font-size:0.95rem; margin-bottom:5px;">📝 ${t.message}</div>
+                        ${replyBlock}
+                    </div>`;
+                }).join('');
+            } catch(e) {}
+        }
+
+        // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
+        function selectMode(mode) { currentMode = mode; switchTab('genre', document.querySelectorAll('.nav-item')[0]); }
         async function chooseGenre(id) {
             currentGenre = id;
-
-            if (currentMode === 'solo') {
-                startSearch(); // Сразу ищем
-            } else if (currentMode === 'duo_create') {
-                await createRoomImpl(); // Создаем комнату с этим жанром
-            }
+            if (currentMode === 'solo') startSearch();
+            else await createRoomImpl();
         }
-
-        function showDuoMenu() {
-            switchTab('duo-menu', document.querySelectorAll('.nav-item')[0]);
-        }
-
-        // Запуск экрана поиска
+        function showDuoMenu() { switchTab('duo-menu', document.querySelectorAll('.nav-item')[0]); }
         function startSearch(partnerName = null) {
             switchTab('search', document.querySelectorAll('.nav-item')[0]);
-
             const badge = document.getElementById('partner-badge');
-            if (partnerName) {
-                badge.style.display = 'block';
-                badge.innerText = `В комнате с: ${partnerName}`;
-            } else {
-                badge.style.display = 'none';
-            }
+            if (partnerName) { badge.style.display = 'block'; badge.innerText = `В комнате с: ${partnerName}`; } 
+            else badge.style.display = 'none';
             loadMovie();
         }
-
-        // КНОПКА ВЫХОДА (КРЕСТИК)
         async function exitSearch() {
-            if (!confirm("Закончить поиск и выйти?")) return;
-
-            // Если мы в комнате — нужно выйти из неё на сервере
+            if (!confirm("Выйти?")) return;
             if (myRoomId) {
                 const uid = tg.initDataUnsafe.user?.id;
-                try {
-                    await fetch(`${API_BASE}/leave_room`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
-                        body: JSON.stringify({ user_id: uid, room_id: myRoomId })
-                    });
-                } catch(e) {}
+                try { await fetch(`${API_BASE}/leave_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, room_id: myRoomId }) }); } catch(e){}
             }
-
-            // Сброс локального состояния
             myRoomId = null;
             if (pollingInterval) clearInterval(pollingInterval);
             switchTab('home', document.querySelectorAll('.nav-item')[0]);
         }
 
-        // --- ЛОГИКА КОМНАТ ---
-
         async function createRoomImpl() {
             const uid = tg.initDataUnsafe.user?.id;
             const name = tg.initDataUnsafe.user?.first_name || "Игрок 1";
-
             try {
-                const res = await fetch(`${API_BASE}/create_room`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
-                    // Передаем жанр!
-                    body: JSON.stringify({ user_id: uid, user_name: name, genre: currentGenre })
-                });
+                const res = await fetch(`${API_BASE}/create_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, user_name: name, genre: currentGenre }) });
                 const data = await res.json();
-
                 myRoomId = data.room_id;
-                tg.showConfirm(`Код комнаты: ${data.room_id}\n\nОтправь другу и жди его входа!`, (ok) => {});
-
-                // Ждем партнера
+                tg.showConfirm(`Код: ${data.room_id}`, (ok) => {});
                 pollingInterval = setInterval(checkRoomStatus, 3000);
-
-            } catch (e) { tg.showAlert("Ошибка создания комнаты"); }
+            } catch (e) { tg.showAlert("Ошибка"); }
         }
 
         async function checkRoomStatus() {
             if (!myRoomId) return;
             try {
-                const res = await fetch(`${API_BASE}/check_room/${myRoomId}`, {
-                    headers: {'ngrok-skip-browser-warning': 'true'}
-                });
+                const res = await fetch(`${API_BASE}/check_room/${myRoomId}`, {headers: {'ngrok-skip-browser-warning': 'true'}});
                 const data = await res.json();
-                if (data.status === 'joined') {
-                    clearInterval(pollingInterval);
-                    tg.showAlert(`Игрок ${data.partner_name} вошел!`);
-                    startSearch(data.partner_name);
-                }
+                if (data.status === 'joined') { clearInterval(pollingInterval); tg.showAlert("Друг вошел!"); startSearch(data.partner_name); }
             } catch(e) {}
         }
 
-        function promptJoinRoom() {
-            const code = prompt("Введите 4-значный код:");
-            if (code) joinRoom(code);
-        }
-
+        function promptJoinRoom() { const code = prompt("Введите код:"); if (code) joinRoom(code); }
         async function joinRoom(code) {
             const uid = tg.initDataUnsafe.user?.id;
             const name = tg.initDataUnsafe.user?.first_name || "Игрок 2";
-
             try {
-                const res = await fetch(`${API_BASE}/join_room`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
-                    body: JSON.stringify({ user_id: uid, user_name: name, room_id: code })
-                });
+                const res = await fetch(`${API_BASE}/join_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, user_name: name, room_id: code }) });
                 const data = await res.json();
-
-                if (data.status === 'success') {
-                    myRoomId = code;
-                    currentGenre = data.genre; // Применяем жанр комнаты!
-                    tg.showAlert("Успешно подключено!");
-                    startSearch(data.partner_name);
-                } else {
-                    tg.showAlert(data.message);
-                }
-            } catch (e) { tg.showAlert("Ошибка подключения"); }
+                if (data.status === 'success') { myRoomId = code; currentGenre = data.genre; tg.showAlert("ОК!"); startSearch(data.partner_name); } 
+                else tg.showAlert(data.message);
+            } catch (e) { tg.showAlert("Ошибка"); }
         }
 
-        // --- ЗАГРУЗКА ФИЛЬМА ---
         async function loadMovie() {
             if (isLoading && abortController) abortController.abort();
-
-            const title = document.getElementById('title');
-            const poster = document.getElementById('poster');
-            const posterBlur = document.getElementById('poster-blur');
-            const desc = document.getElementById('desc');
-            const rating = document.getElementById('rating');
-            const meta = document.getElementById('meta');
-
-            isLoading = true;
-            abortController = new AbortController();
-            title.innerText = "Подбираем...";
-            poster.classList.remove('loaded');
-
+            isLoading = true; abortController = new AbortController();
+            document.getElementById('title').innerText = "Подбираем..."; document.getElementById('poster').classList.remove('loaded');
             try {
-                // ДОБАВИЛ GENRE В ЗАПРОС
                 const url = `${API_BASE}/get_movie?genre=${currentGenre}&nocache=${Date.now()}`;
-
-                const response = await fetch(url, {
-                    headers: { 'ngrok-skip-browser-warning': 'true' },
-                    signal: abortController.signal
-                });
-
-                if (!response.ok) throw new Error("Server error");
-                const data = await response.json();
-
+                const res = await fetch(url, { headers: { 'ngrok-skip-browser-warning': 'true' }, signal: abortController.signal });
+                const data = await res.json();
                 currentMovieId = data.id;
-                title.innerText = data.title;
-                poster.src = data.poster;
-                posterBlur.src = data.poster;
-                desc.innerText = data.description || "Нет описания";
-                rating.innerText = data.rating;
-                meta.innerText = `${data.year} • ${data.genres}`;
-
-                poster.onload = () => {
-                    poster.classList.add('loaded');
-                    isLoading = false;
-                };
-            } catch (e) {
-                if (e.name !== 'AbortError') {
-                    title.innerText = "Фильмы кончились 😔";
-                    isLoading = false;
-                }
-            }
+                document.getElementById('title').innerText = data.title;
+                document.getElementById('poster').src = data.poster; document.getElementById('poster-blur').src = data.poster;
+                document.getElementById('desc').innerText = data.description; document.getElementById('rating').innerText = data.rating;
+                document.getElementById('meta').innerText = `${data.year} • ${data.genres}`;
+                document.getElementById('poster').onload = () => { document.getElementById('poster').classList.add('loaded'); isLoading = false; };
+            } catch (e) { if(e.name!=='AbortError') isLoading = false; }
         }
 
         async function handleLike() {
-            if (isLoading) return;
-            tg.HapticFeedback.notificationOccurred('success');
-
-            const titleText = document.getElementById('title').innerText;
-            const posterUrl = document.getElementById('poster').src;
-            const user_id = tg.initDataUnsafe.user?.id;
-
-            if (!user_id || titleText === "Подбираем...") return;
-
+            const uid = tg.initDataUnsafe.user?.id;
+            if(!uid) return;
             isLoading = true;
             try {
                 await fetch(`${API_BASE}/like`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-                    body: JSON.stringify({
-                        user_id: user_id,
-                        movie_id: currentMovieId,
-                        movie_title: titleText,
-                        poster_url: posterUrl
-                    })
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: uid, movie_id: currentMovieId, movie_title: document.getElementById('title').innerText, poster_url: document.getElementById('poster').src })
                 });
-                isLoading = false;
-                loadMovie();
-            } catch (e) {
-                isLoading = false;
-                tg.showAlert("Ошибка сети");
-            }
+                isLoading = false; loadMovie();
+            } catch(e) { isLoading = false; }
         }
 
-        // --- ПРОФИЛЬ ---
         async function loadMyLikes() {
-            const list = document.getElementById('likes-list');
-            const user_id = tg.initDataUnsafe.user?.id;
-            if (!user_id) return;
-
+            const uid = tg.initDataUnsafe.user?.id;
             try {
-                const response = await fetch(`${API_BASE}/get_likes/${user_id}`, {
-                    headers: { 'ngrok-skip-browser-warning': 'true' }
-                });
-                const likes = await response.json();
-
-                if (!likes || likes.length === 0) {
-                    list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-dim)">Тут пока пусто...</div>`;
-                    return;
-                }
-
-                list.innerHTML = likes.map(m => `
-                    <div class="mode-card" style="padding:12px; gap:12px; margin-bottom:10px;">
-                        <img src="${m.poster}" style="width:50px; height:75px; object-fit:cover; border-radius:12px;">
-                        <div class="mode-info">
-                            <h3 style="font-size:1rem;">${m.title}</h3>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) {
-                list.innerHTML = "Ошибка загрузки";
-            }
+                const res = await fetch(`${API_BASE}/get_likes/${uid}`, {headers: {'ngrok-skip-browser-warning': 'true'}});
+                const data = await res.json();
+                document.getElementById('likes-list').innerHTML = data.length ? data.map(m => `<div class="mode-card" style="padding:10px;"><img src="${m.poster}" style="width:40px;height:60px;border-radius:8px;margin-right:10px;"><div>${m.title}</div></div>`).join('') : '<div style="text-align:center;color:gray;">Пусто</div>';
+            } catch(e) {}
         }
 
-        // --- АДМИНКА ---
+        // Админка
         async function loadAdminData() {
-            const user_id = tg.initDataUnsafe.user?.id;
-            const headers = { 'ngrok-skip-browser-warning': 'true' };
-            try {
-                const s = await (await fetch(`${API_BASE}/admin/stats/${user_id}`, { headers })).json();
-                document.getElementById('adm-users').innerText = s.users;
-                document.getElementById('adm-likes').innerText = s.likes;
-                document.getElementById('adm-rooms').innerText = s.rooms;
-                document.getElementById('adm-tickets').innerText = s.tickets;
-
-                const t = await (await fetch(`${API_BASE}/admin/tickets/${user_id}`, { headers })).json();
-                const list = document.getElementById('tickets-list');
-
-                if (!t.length) list.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Пусто</div>';
-                else list.innerHTML = t.map(tik => `
-                    <div class="ticket-card">
-                        <div class="ticket-header"><span>${tik.user_id}</span></div>
-                        <div style="margin-bottom:8px">"${tik.message}"</div>
-                        <div class="reply-box">
-                            <input id="rep-${tik.id}" class="reply-input" placeholder="Ответ">
-                            <button onclick="reply(${tik.id})" style="background:var(--accent);border:none;border-radius:8px;padding:0 10px;">➜</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) {}
+            const uid = tg.initDataUnsafe.user?.id;
+            const h = { 'ngrok-skip-browser-warning': 'true' };
+            const s = await (await fetch(`${API_BASE}/admin/stats/${uid}`, { headers: h })).json();
+            document.getElementById('adm-users').innerText = s.users; document.getElementById('adm-likes').innerText = s.likes;
+            document.getElementById('adm-rooms').innerText = s.rooms; document.getElementById('adm-tickets').innerText = s.tickets;
+            const t = await (await fetch(`${API_BASE}/admin/tickets/${uid}`, { headers: h })).json();
+            document.getElementById('tickets-list').innerHTML = t.map(tik => 
+                `<div class="ticket-card"><div class="ticket-header"><span>${tik.user_id}</span><span>${tik.msg_type}</span></div><div style="margin-bottom:8px">"${tik.message}"</div><div class="reply-box"><input id="rep-${tik.id}" class="reply-input"><button onclick="reply(${tik.id})" style="background:var(--accent);border:none;border-radius:8px;">➜</button></div></div>`
+            ).join('');
         }
-
         async function reply(tid) {
             const txt = document.getElementById(`rep-${tid}`).value;
             const uid = tg.initDataUnsafe.user?.id;
-            await fetch(`${API_BASE}/admin/reply_ticket`, {
-                method: 'POST',
-                headers: {'Content-Type':'application/json', 'ngrok-skip-browser-warning':'true'},
-                body: JSON.stringify({admin_id: uid, ticket_id: tid, text: txt})
-            });
+            await fetch(`${API_BASE}/admin/reply_ticket`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_id:uid, ticket_id:tid, text:txt})});
             loadAdminData();
         }
-
         async function sendBroadcast() {
             const txt = document.getElementById('broadcast-text').value;
             const uid = tg.initDataUnsafe.user?.id;
-            if(confirm("Отправить всем?")) {
-                await fetch(`${API_BASE}/admin/broadcast`, {
-                    method: 'POST',
-                    headers: {'Content-Type':'application/json', 'ngrok-skip-browser-warning':'true'},
-                    body: JSON.stringify({admin_id: uid, text: txt})
-                });
-                tg.showAlert("Отправлено");
-            }
-        }
-
-        function showSupport() {
-            tg.showAlert("Поддержка работает через бота.");
+            if(confirm("Всем?")) await fetch(`${API_BASE}/admin/broadcast`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_id:uid, text:txt})});
         }
 
         document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Киноман";
