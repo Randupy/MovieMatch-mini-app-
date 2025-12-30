@@ -92,83 +92,118 @@
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
 
-        /* --- КИНОПРОЕКТОР И ЛУЧ --- */
-        .projector-scene {
-            flex: 1; /* Занимает все доступное место */
+        /* --- MASTERPIECE: CINEMATIC AURORA --- */
+        .cinema-atmosphere {
+            flex: 1; /* Заполняет пустоту */
             width: 100%;
-            min-height: 250px;
+            min-height: 300px;
             margin-top: auto;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end; /* Проектор прижат к низу */
-            padding-bottom: 70px; /* Отступ от меню */
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 90px; /* Отступ от меню */
+
+            /* Маска, чтобы скрыть резкие границы снизу */
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
         }
 
-        /* Луч света */
-        .light-beam {
+        /* 1. Живое сияние (Aurora) */
+        .aurora-blob {
             position: absolute;
-            bottom: 120px; /* Начинается от линзы проектора */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px; /* Ширина луча наверху */
-            height: 100%;
-
-            /* Градиент в форме конуса */
-            background: conic-gradient(
-                from 250deg at 50% 100%,
-                transparent 0deg,
-                rgba(255, 255, 255, 0.05) 15deg,
-                rgba(255, 255, 255, 0.15) 55deg, /* Центр луча ярче */
-                rgba(255, 255, 255, 0.05) 95deg,
-                transparent 110deg
-            );
-
-            /* Размытие краев луча */
-            filter: blur(10px);
-            pointer-events: none;
+            filter: blur(60px);
+            opacity: 0.6;
+            animation: aurora-move 10s infinite alternate ease-in-out;
             z-index: 0;
-
-            /* Эффект мерцания старой пленки */
-            animation: flicker 0.1s infinite alternate;
+        }
+        .blob-1 {
+            top: 20%; left: -20%; width: 300px; height: 300px;
+            background: #3b82f6; /* Blue */
+            animation-duration: 12s;
+        }
+        .blob-2 {
+            bottom: 0%; right: -10%; width: 250px; height: 250px;
+            background: #8b5cf6; /* Purple */
+            animation-delay: -5s;
+        }
+        .blob-3 {
+            bottom: 40%; left: 40%; width: 200px; height: 200px;
+            background: #06b6d4; /* Cyan */
+            opacity: 0.4;
+            animation-duration: 15s;
         }
 
-        /* Проектор (SVG) */
-        .projector-svg {
-            width: 120px;
+        /* 2. Сетка (Texture) - делает фон "дорогим" */
+        .texture-grid {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 1;
+            mask-image: linear-gradient(to bottom, transparent, black 40%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 40%, transparent);
+        }
+
+        /* 3. Силуэт (Вектор) */
+        .skyline-svg {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
             height: auto;
             z-index: 2;
-            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+            opacity: 0.8;
+            filter: drop-shadow(0 -5px 20px rgba(56, 189, 248, 0.2)); /* Свечение контура */
         }
 
-        /* Снежинки ВНУТРИ луча */
-        .dust-particle {
+        /* 4. Текст */
+        .atmosphere-text {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .atmosphere-text h4 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin: 0;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .atmosphere-text p {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 5px 0 0 0;
+            font-weight: 500;
+        }
+
+        /* 5. Частицы (Снег/Магия) */
+        .magic-particle {
             position: absolute;
-            background: #fff;
+            background: white;
             border-radius: 50%;
             opacity: 0;
-            animation: floatUp 4s infinite linear;
+            animation: float-magic 6s infinite linear;
+            box-shadow: 0 0 10px white;
         }
 
-        @keyframes flicker {
-            0% { opacity: 0.8; }
-            100% { opacity: 1; }
+        @keyframes aurora-move {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -30px) scale(1.2); }
+        }
+        @keyframes float-magic {
+            0% { transform: translateY(100px) scale(0); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
         }
 
-        @keyframes floatUp {
-            0% { transform: translateY(100%) scale(0.5); opacity: 0; }
-            20% { opacity: 0.8; }
-            80% { opacity: 0.4; }
-            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
-        }
-
-        /* Вращение бобин */
-        .reel {
-            transform-origin: center;
-            animation: spin 4s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
 
 
     </style>
@@ -179,45 +214,45 @@
         <h1>MovieMatch</h1>
         <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
         <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
-                <!-- 👇👇👇 ВИДЖЕТ: ПРОЕКТОР И ЛУЧ 👇👇👇 -->
-        <div class="projector-scene">
-            
-            <!-- Луч света -->
-            <div class="light-beam">
-                <!-- Летающие снежинки/пылинки в свете -->
-                <div class="dust-particle" style="left: 40%; width: 2px; height: 2px; animation-duration: 3s; bottom: 0;"></div>
-                <div class="dust-particle" style="left: 50%; width: 3px; height: 3px; animation-duration: 5s; animation-delay: 1s; bottom: 20px;"></div>
-                <div class="dust-particle" style="left: 60%; width: 2px; height: 2px; animation-duration: 4s; animation-delay: 2s; bottom: 10px;"></div>
-                <div class="dust-particle" style="left: 45%; width: 4px; height: 4px; animation-duration: 6s; animation-delay: 0.5s; bottom: 0;"></div>
-                <div class="dust-particle" style="left: 55%; width: 1px; height: 1px; animation-duration: 2.5s; animation-delay: 1.5s; bottom: 30px;"></div>
-            </div>
+        <!-- 👇👇👇 PREMIUM UI: CINEMATIC AURORA 👇👇👇 -->
+        <div class="cinema-atmosphere">
+            <!-- 1. Фоновые пятна (Aurora) -->
+            <div class="aurora-blob blob-1"></div>
+            <div class="aurora-blob blob-2"></div>
+            <div class="aurora-blob blob-3"></div>
 
-            <!-- Проектор (Векторный рисунок) -->
-            <svg class="projector-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <!-- Ножки -->
-                <path d="M20,90 L30,70 H70 L80,90" stroke="#475569" stroke-width="4" fill="none"/>
-                
-                <!-- Корпус -->
-                <rect x="25" y="45" width="50" height="35" rx="5" fill="#1e293b" stroke="#334155" stroke-width="2"/>
-                
-                <!-- Линза (отсюда идет свет) -->
-                <rect x="40" y="40" width="20" height="10" fill="#334155"/>
-                <circle cx="50" cy="40" r="5" fill="#f8fafc" opacity="0.9" /> <!-- Светящаяся линза -->
+            <!-- 2. Текстурная сетка -->
+            <div class="texture-grid"></div>
 
-                <!-- Бобины с пленкой (Крутятся!) -->
-                <g class="reel">
-                    <circle cx="35" cy="30" r="12" fill="none" stroke="#94a3b8" stroke-width="2"/>
-                    <line x1="35" y1="18" x2="35" y2="42" stroke="#94a3b8" stroke-width="1"/>
-                    <line x1="23" y1="30" x2="47" y2="30" stroke="#94a3b8" stroke-width="1"/>
-                </g>
-                <g class="reel" style="animation-direction: reverse;">
-                    <circle cx="65" cy="30" r="12" fill="none" stroke="#94a3b8" stroke-width="2"/>
-                    <line x1="65" y1="18" x2="65" y2="42" stroke="#94a3b8" stroke-width="1"/>
-                    <line x1="53" y1="30" x2="77" y2="30" stroke="#94a3b8" stroke-width="1"/>
-                </g>
+            <!-- 3. Магические частицы -->
+            <div class="magic-particle" style="left: 20%; width: 2px; height: 2px; animation-duration: 5s;"></div>
+            <div class="magic-particle" style="left: 70%; width: 3px; height: 3px; animation-duration: 7s; animation-delay: 1s;"></div>
+            <div class="magic-particle" style="left: 40%; width: 1px; height: 1px; animation-duration: 4s; animation-delay: 2s;"></div>
+            <div class="magic-particle" style="left: 85%; width: 2px; height: 2px; animation-duration: 6s; animation-delay: 0.5s;"></div>
+
+            <!-- 4. Силуэт зимнего города/кино (SVG) -->
+            <svg class="skyline-svg" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="skyline-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <!-- Плавные холмы -->
+                <path fill="url(#skyline-grad)" fill-opacity="1" d="M0,224L48,213.3C96,203,192,192,288,197.3C384,203,480,224,576,213.3C672,203,768,160,864,149.3C960,139,1056,160,1152,186.7C1248,213,1344,245,1392,261.3L1440,277V320H1392C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320H0Z"></path>
+                
+                <!-- Маленькая елка (силуэт) -->
+                <path fill="#0f172a" d="M860,120 L880,160 H840 Z" />
+                <path fill="#0f172a" d="M860,140 L890,190 H830 Z" />
             </svg>
+
+            <!-- 5. Текст -->
+            <div class="atmosphere-text">
+                <h4>WINTER VIBES</h4>
+                <p>Время хорошего кино</p>
+            </div>
         </div>
-        <!-- 👆👆👆 КОНЕЦ ВСТАВКИ 👆👆👆 -->
+        <!-- 👆👆👆 КОНЕЦ 👆👆👆 -->
 
     </div>
 
