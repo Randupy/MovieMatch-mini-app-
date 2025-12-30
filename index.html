@@ -30,12 +30,12 @@
             flex-direction: column;
         }
 
-        .screen { 
-            display: none; 
-            padding: 20px; 
+        .screen {
+            display: none;
+            padding: 20px;
             flex: 1;
             overflow-y: auto;
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .active { display: flex; flex-direction: column; }
 
@@ -173,11 +173,11 @@
         .movie-meta { font-size: 0.85rem; color: var(--text-dim); }
         .movie-desc { font-size: 0.9rem; color: #cbd5e1; line-height: 1.4; margin-top: 4px; }
 
-        .tinder-btns { 
-            display: flex; 
-            justify-content: center; 
-            gap: 40px; 
-            padding: 15px 20px 20px; 
+        .tinder-btns {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 15px 20px 20px;
             background: rgba(15, 23, 42, 0.8);
             z-index: 3;
         }
@@ -284,6 +284,7 @@
 
         let isLoading = false;
         let abortController = null;
+        let currentMovieId = null; // Добавили переменную для ID
 
         function switchTab(screen, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -329,10 +330,11 @@
                 if (!response.ok) throw new Error("Server error");
                 const data = await response.json();
 
+                currentMovieId = data.id; // Сохраняем ID фильма
                 title.innerText = data.title;
                 poster.src = data.poster;
                 posterBlur.src = data.poster;
-                
+
                 desc.innerText = data.description || "Описание временно недоступно.";
                 rating.innerText = data.rating || "?.?";
                 meta.innerText = `${data.year || '----'} • ${data.genres || 'Кино'}`;
@@ -361,10 +363,11 @@
 
             isLoading = true;
             try {
+                // Добавили movie_id в отправляемые данные
                 await fetch(`${API_BASE}/like`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-                    body: JSON.stringify({ user_id, movie_title: titleText, poster_url: posterUrl })
+                    body: JSON.stringify({ user_id, movie_id: currentMovieId, movie_title: titleText, poster_url: posterUrl })
                 });
                 isLoading = false;
                 loadMovie();
