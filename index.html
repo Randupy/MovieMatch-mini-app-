@@ -20,9 +20,9 @@
         .screen { display: none; padding: 20px; flex: 1; overflow-y: auto; animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .active { display: flex; flex-direction: column; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
+
         h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 24px; text-align: center; }
-        
+
         .mode-card { background: var(--surface); backdrop-filter: blur(12px); border-radius: 24px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 20px; cursor: pointer; transition: all 0.2s; }
         .mode-card:active { transform: scale(0.96); background: rgba(255,255,255,0.15); }
         .mode-icon { font-size: 2.2rem; background: rgba(255,255,255,0.05); width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 18px; }
@@ -67,7 +67,7 @@
         .stat-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; text-align: center; }
         .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
         .stat-lbl { font-size: 0.8rem; color: var(--text-dim); }
-        
+
         .ticket-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .ticket-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
@@ -106,7 +106,7 @@
                 <div id="desc" class="movie-desc">Загружаем описание фильма...</div>
             </div>
             <div class="tinder-btns">
-                <button class="btn-circle btn-dislike" onclick="loadMovie()">✕</button>
+                <button class="btn-circle btn-dislike" onclick="handleDislike()">✕</button>
                 <button class="btn-circle btn-like" onclick="handleLike()">❤</button>
             </div>
         </div>
@@ -132,7 +132,7 @@
     <div id="support-screen" class="screen">
         <h1>Поддержка</h1>
         <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:15px;">Опишите проблему, мы ответим в ближайшее время:</p>
-        
+
         <textarea id="ticket-text" rows="4" placeholder="Введите ваше сообщение..."></textarea>
         <button class="action-btn" onclick="createTicket()">Отправить обращение</button>
 
@@ -243,18 +243,18 @@
                 const res = await fetch(`${API_BASE}/my_tickets/${uid}`, {headers:{'ngrok-skip-browser-warning':'true'}});
                 const tickets = await res.json();
                 const list = document.getElementById('my-tickets-list');
-                
+
                 if(!tickets.length) list.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Обращений нет</div>';
                 else list.innerHTML = tickets.map(t => {
                     const statusClass = t.status === 'open' ? 'status-open' : 'status-closed';
                     const statusText = t.status === 'open' ? 'В обработке' : 'Ответ получен';
-                    
+
                     // Блок с ответом админа
                     let replyBlock = '';
                     if (t.admin_reply) {
                         replyBlock = `<div class="admin-reply"><b>Ответ поддержки:</b><br>${t.admin_reply}</div>`;
                     }
-                    
+
                     return `
                     <div class="ticket-card">
                         <div class="ticket-header">
@@ -279,7 +279,7 @@
         function startSearch(partnerName = null) {
             switchTab('search', document.querySelectorAll('.nav-item')[0]);
             const badge = document.getElementById('partner-badge');
-            if (partnerName) { badge.style.display = 'block'; badge.innerText = `В комнате с: ${partnerName}`; } 
+            if (partnerName) { badge.style.display = 'block'; badge.innerText = `В комнате с: ${partnerName}`; }
             else badge.style.display = 'none';
             loadMovie();
         }
@@ -322,27 +322,64 @@
             try {
                 const res = await fetch(`${API_BASE}/join_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, user_name: name, room_id: code }) });
                 const data = await res.json();
-                if (data.status === 'success') { myRoomId = code; currentGenre = data.genre; tg.showAlert("ОК!"); startSearch(data.partner_name); } 
+                if (data.status === 'success') { myRoomId = code; currentGenre = data.genre; tg.showAlert("ОК!"); startSearch(data.partner_name); }
                 else tg.showAlert(data.message);
             } catch (e) { tg.showAlert("Ошибка"); }
         }
 
         async function loadMovie() {
-            if (isLoading && abortController) abortController.abort();
-            isLoading = true; abortController = new AbortController();
-            document.getElementById('title').innerText = "Подбираем..."; document.getElementById('poster').classList.remove('loaded');
-            try {
-                const url = `${API_BASE}/get_movie?genre=${currentGenre}&nocache=${Date.now()}`;
-                const res = await fetch(url, { headers: { 'ngrok-skip-browser-warning': 'true' }, signal: abortController.signal });
-                const data = await res.json();
-                currentMovieId = data.id;
-                document.getElementById('title').innerText = data.title;
-                document.getElementById('poster').src = data.poster; document.getElementById('poster-blur').src = data.poster;
-                document.getElementById('desc').innerText = data.description; document.getElementById('rating').innerText = data.rating;
-                document.getElementById('meta').innerText = `${data.year} • ${data.genres}`;
-                document.getElementById('poster').onload = () => { document.getElementById('poster').classList.add('loaded'); isLoading = false; };
-            } catch (e) { if(e.name!=='AbortError') isLoading = false; }
+    // 1. Сначала получаем ID пользователя
+    const uid = tg.initDataUnsafe.user?.id;
+    if (!uid) return;
+
+    if (isLoading && abortController) abortController.abort();
+
+    isLoading = true;
+    abortController = new AbortController();
+
+    document.getElementById('title').innerText = "Подбираем...";
+    document.getElementById('poster').classList.remove('loaded');
+
+    try {
+        // 2. Добавили user_id=${uid} в запрос
+        const url = `${API_BASE}/get_movie?user_id=${uid}&genre=${currentGenre}&nocache=${Date.now()}`;
+
+        const res = await fetch(url, {
+            headers: { 'ngrok-skip-browser-warning': 'true' },
+            signal: abortController.signal
+        });
+
+        const data = await res.json();
+
+        // Если фильмы кончились (сервер вернул такой заголовок)
+        if (data.title === "Фильмы закончились") {
+            document.getElementById('title').innerText = "Фильмы кончились 😔";
+            document.getElementById('desc').innerText = "Попробуйте сменить жанр.";
+            document.getElementById('poster').src = "https://placehold.co/400x600/1e293b/FFF?text=End";
+            isLoading = false;
+            return;
         }
+
+        currentMovieId = data.id;
+        document.getElementById('title').innerText = data.title;
+        document.getElementById('poster').src = data.poster;
+        document.getElementById('poster-blur').src = data.poster;
+        document.getElementById('desc').innerText = data.description || "Описание отсутствует";
+        document.getElementById('rating').innerText = data.rating;
+        document.getElementById('meta').innerText = `${data.year} • ${data.genres}`;
+
+        document.getElementById('poster').onload = () => {
+            document.getElementById('poster').classList.add('loaded');
+            isLoading = false;
+        };
+    } catch (e) {
+        if(e.name !== 'AbortError') {
+            isLoading = false;
+            document.getElementById('title').innerText = "Ошибка 🔄";
+        }
+    }
+}
+
 
         async function handleLike() {
             const uid = tg.initDataUnsafe.user?.id;
@@ -356,6 +393,30 @@
                 isLoading = false; loadMovie();
             } catch(e) { isLoading = false; }
         }
+
+        async function handleDislike() {
+    if (isLoading) return;
+    const uid = tg.initDataUnsafe.user?.id;
+    const title = document.getElementById('title').innerText;
+
+    // Сразу грузим следующий, чтобы не ждать
+    loadMovie();
+
+    // В фоне отправляем на сервер инфу, что фильм просмотрен
+    try {
+        await fetch(`${API_BASE}/dislike`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+            body: JSON.stringify({
+                user_id: uid,
+                movie_id: currentMovieId,
+                movie_title: title,
+                poster_url: ""
+            })
+        });
+    } catch (e) {}
+}
+
 
         async function loadMyLikes() {
             const uid = tg.initDataUnsafe.user?.id;
@@ -374,7 +435,7 @@
             document.getElementById('adm-users').innerText = s.users; document.getElementById('adm-likes').innerText = s.likes;
             document.getElementById('adm-rooms').innerText = s.rooms; document.getElementById('adm-tickets').innerText = s.tickets;
             const t = await (await fetch(`${API_BASE}/admin/tickets/${uid}`, { headers: h })).json();
-            document.getElementById('tickets-list').innerHTML = t.map(tik => 
+            document.getElementById('tickets-list').innerHTML = t.map(tik =>
                 `<div class="ticket-card"><div class="ticket-header"><span>${tik.user_id}</span><span>${tik.msg_type}</span></div><div style="margin-bottom:8px">"${tik.message}"</div><div class="reply-box"><input id="rep-${tik.id}" class="reply-input"><button onclick="reply(${tik.id})" style="background:var(--accent);border:none;border-radius:8px;">➜</button></div></div>`
             ).join('');
         }
