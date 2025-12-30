@@ -92,73 +92,68 @@
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
 
-        /* --- ЗИМНЯЯ СЦЕНА (SVG ART) --- */
-        .winter-scene {
-            flex: 1; /* Заполняет всё пустое пространство */
+        /* --- НЕОНОВАЯ ЗМЕЙКА И СНЕГ --- */
+        .neon-party-container {
+            flex: 1; /* Занимает всё место */
             width: 100%;
-            min-height: 250px;
-            margin-top: auto;
+            margin-top: 10px;
             position: relative;
             overflow: hidden;
             display: flex;
-            align-items: flex-end;
-            padding-bottom: 70px; /* Чтобы навигация не перекрывала */
-            background: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
+            justify-content: center;
+            padding-bottom: 70px; /* Отступ от меню */
         }
 
-        .scene-svg {
+        /* SVG на весь блок */
+        .snake-svg {
             width: 100%;
             height: 100%;
+            min-height: 300px;
+            /* Небольшое свечение вокруг всей гирлянды */
+            filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.2));
+        }
+
+        /* Провод */
+        .wire {
+            fill: none;
+            stroke: #1e293b; /* Темный цвет провода */
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        /* Лампочки */
+        .bulb {
+            animation: neon-flicker 1.5s infinite alternate;
+        }
+
+        /* Цвета неона */
+        .b-pink { fill: #ec4899; filter: drop-shadow(0 0 8px #ec4899); animation-delay: 0s; }
+        .b-blue { fill: #3b82f6; filter: drop-shadow(0 0 8px #3b82f6); animation-delay: 0.5s; }
+        .b-gold { fill: #fbbf24; filter: drop-shadow(0 0 8px #fbbf24); animation-delay: 1s; }
+        .b-green { fill: #4ade80; filter: drop-shadow(0 0 8px #4ade80); animation-delay: 0.2s; }
+        .b-red { fill: #ef4444; filter: drop-shadow(0 0 8px #ef4444); animation-delay: 0.7s; }
+
+        /* Эффект мигания/неона */
+        @keyframes neon-flicker {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        /* СНЕГОПАД (Глубина резкости) */
+        .snowflake {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            z-index: 1;
+            top: -10px;
+            border-radius: 50%;
+            background: white;
+            animation: fall linear infinite;
         }
+        /* Ближний снег (быстрый, четкий) */
+        .snow-near { width: 4px; height: 4px; opacity: 0.9; z-index: 2; }
+        /* Дальний снег (медленный, размытый) */
+        .snow-far { width: 2px; height: 2px; opacity: 0.5; filter: blur(1px); z-index: 0; }
 
-        /* Анимация света в окне */
-        .window-light {
-            animation: warm-glow 3s infinite alternate ease-in-out;
-        }
-
-        /* Анимация дыма из трубы */
-        .smoke {
-            transform-origin: center;
-            animation: smoke-rise 4s infinite linear;
-            opacity: 0;
-        }
-        .smoke-1 { animation-delay: 0s; }
-        .smoke-2 { animation-delay: 2s; }
-
-        /* Падающий снег (CSS) */
-        .snow-layer {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 2;
-            pointer-events: none;
-            background-image:
-                radial-gradient(2px 2px at 20px 30px, #fff, transparent),
-                radial-gradient(2px 2px at 40px 70px, #fff, transparent),
-                radial-gradient(2px 2px at 50px 160px, #fff, transparent),
-                radial-gradient(2px 2px at 90px 40px, #fff, transparent),
-                radial-gradient(2px 2px at 130px 80px, #fff, transparent);
-            background-size: 200px 200px;
-            animation: snow 10s linear infinite;
-            opacity: 0.6;
-        }
-
-        @keyframes warm-glow {
-            0% { fill: #fbbf24; filter: drop-shadow(0 0 5px #fbbf24); }
-            100% { fill: #f59e0b; filter: drop-shadow(0 0 15px #f59e0b); }
-        }
-
-        @keyframes smoke-rise {
-            0% { transform: translateY(0) scale(1); opacity: 0.6; }
-            100% { transform: translateY(-40px) scale(2); opacity: 0; }
-        }
-
-        @keyframes snow {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(200px); }
+        @keyframes fall {
+            to { transform: translateY(100vh); }
         }
 
     </style>
@@ -169,53 +164,44 @@
         <h1>MovieMatch</h1>
         <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
         <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
-                <!-- 👇👇👇 АНИМИРОВАННАЯ ЗИМНЯЯ СЦЕНА 👇👇👇 -->
-        <div class="winter-scene">
-            <!-- Слой снега -->
-            <div class="snow-layer"></div>
+        <!-- 👇👇👇 НЕОНОВАЯ ЗМЕЙКА 👇👇👇 -->
+        <div class="neon-party-container">
             
-            <svg class="scene-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-                <!-- 1. Задний план (Луна и Горы) -->
-                <circle cx="320" cy="40" r="25" fill="#fef3c7" opacity="0.8" />
-                <path d="M0,200 L150,80 L300,180 L400,120 V200 Z" fill="#1e293b" opacity="0.5"/>
-                
-                <!-- 2. Средний план (Холмы) -->
-                <path d="M-50,200 Q100,100 250,200 T500,200 V250 H-50 Z" fill="#1e293b"/>
-                
-                <!-- 3. Елки (треугольники) -->
-                <g transform="translate(20, 140)">
-                    <polygon points="10,0 -10,40 30,40" fill="#0f766e"/>
-                    <polygon points="10,-20 -5,10 25,10" fill="#115e59"/>
-                </g>
-                <g transform="translate(60, 160) scale(0.8)">
-                    <polygon points="10,0 -10,40 30,40" fill="#0f766e"/>
-                    <polygon points="10,-20 -5,10 25,10" fill="#115e59"/>
-                </g>
-                <g transform="translate(350, 150) scale(1.2)">
-                    <polygon points="10,0 -10,40 30,40" fill="#0f766e"/>
-                    <polygon points="10,-20 -5,10 25,10" fill="#115e59"/>
-                </g>
+            <!-- Снегопад (разные слои) -->
+            <div class="snowflake snow-far" style="left: 10%; animation-duration: 8s;"></div>
+            <div class="snowflake snow-near" style="left: 25%; animation-duration: 5s; animation-delay: 1s;"></div>
+            <div class="snowflake snow-far" style="left: 40%; animation-duration: 10s; animation-delay: 2s;"></div>
+            <div class="snowflake snow-near" style="left: 60%; animation-duration: 4s; animation-delay: 0.5s;"></div>
+            <div class="snowflake snow-far" style="left: 80%; animation-duration: 9s; animation-delay: 3s;"></div>
+            <div class="snowflake snow-near" style="left: 90%; animation-duration: 6s; animation-delay: 1.5s;"></div>
 
-                <!-- 4. Домик -->
-                <rect x="240" y="140" width="60" height="40" fill="#334155"/>
-                <polygon points="230,140 270,110 310,140" fill="#475569"/>
-                <!-- Труба -->
-                <rect x="280" y="120" width="10" height="15" fill="#1e293b"/>
-                <!-- Дым -->
-                <circle cx="285" cy="115" r="5" fill="#94a3b8" class="smoke smoke-1"/>
-                <circle cx="285" cy="115" r="7" fill="#94a3b8" class="smoke smoke-2"/>
+            <!-- Змейка-Гирлянда (SVG) -->
+            <!-- preserveAspectRatio="none" растягивает гирлянду на любую высоту экрана -->
+            <svg class="snake-svg" viewBox="0 0 200 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                 
-                <!-- Светящееся окно -->
-                <rect x="255" y="150" width="15" height="15" class="window-light"/>
-                <!-- Рама окна -->
-                <line x1="262.5" y1="150" x2="262.5" y2="165" stroke="#334155" stroke-width="1"/>
-                <line x1="255" y1="157.5" x2="270" y2="157.5" stroke="#334155" stroke-width="1"/>
+                <!-- Извилистый провод (S-образный) -->
+                <path class="wire" d="M100,-10 C 180,50 180,100 100,150 C 20,200 20,300 100,350 C 180,400 180,450 100,500" />
 
-                <!-- 5. Передний сугроб -->
-                <path d="M-20,220 Q200,180 420,220 Z" fill="#334155" opacity="0.3"/>
+                <!-- Лампочки (расположены по траектории провода) -->
+                <!-- Группа 1 -->
+                <circle cx="125" cy="20" r="6" class="bulb b-pink" />
+                <circle cx="150" cy="50" r="6" class="bulb b-blue" />
+                <circle cx="145" cy="90" r="6" class="bulb b-gold" />
+                
+                <!-- Группа 2 (Центр) -->
+                <circle cx="100" cy="150" r="7" class="bulb b-red" /> <!-- Центральная яркая -->
+                
+                <!-- Группа 3 -->
+                <circle cx="55" cy="210" r="6" class="bulb b-green" />
+                <circle cx="40" cy="250" r="6" class="bulb b-pink" />
+                <circle cx="60" cy="290" r="6" class="bulb b-blue" />
+
+                <!-- Группа 4 (Низ) -->
+                <circle cx="130" cy="370" r="6" class="bulb b-gold" />
+                <circle cx="150" cy="410" r="6" class="bulb b-green" />
             </svg>
         </div>
-        <!-- 👆👆👆 КОНЕЦ СЦЕНЫ 👆👆👆 -->
+        <!-- 👆👆👆 КОНЕЦ ВСТАВКИ 👆👆👆 -->
 
     </div>
 
