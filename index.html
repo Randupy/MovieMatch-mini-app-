@@ -197,15 +197,23 @@
             font-weight: 700; font-size: 1rem; margin-top: 12px;
         }
 
-        /* --- НОВЫЕ СТИЛИ АДМИНКИ --- */
+        /* --- НОВЫЕ СТИЛИ (ЖАНРЫ, БЕЙДЖ, КНОПКА ВЫХОДА) --- */
+        .genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
+        .genre-btn { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 15px; border-radius: 16px; text-align: center; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .genre-btn:active { background: var(--accent); color: #000; transform: scale(0.98); }
+
+        .partner-badge { width: 100%; max-width: 380px; margin: 0 auto 10px; background: rgba(56, 189, 248, 0.15); color: var(--accent); padding: 10px; border-radius: 12px; text-align: center; font-weight: 700; font-size: 0.9rem; border: 1px solid rgba(56, 189, 248, 0.3); display: none; }
+        
+        .exit-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; z-index: 10; transition: 0.2s; }
+        .exit-btn:active { transform: scale(0.9); background: var(--danger); border-color: var(--danger); }
+
+        /* Админка стили */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .stat-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; text-align: center; }
         .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
         .stat-lbl { font-size: 0.8rem; color: var(--text-dim); }
-
         .ticket-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .ticket-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
-
         textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 12px; margin: 10px 0; font-family: inherit; box-sizing: border-box; }
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
@@ -213,9 +221,10 @@
 </head>
 <body>
 
+    <!-- ЭКРАН ГЛАВНОГО МЕНЮ -->
     <div id="home-screen" class="screen active">
         <h1>MovieMatch</h1>
-        <div class="mode-card" onclick="startSearch('solo')">
+        <div class="mode-card" onclick="selectMode('solo')">
             <div class="mode-icon">🍿</div>
             <div class="mode-info">
                 <h3>Один</h3>
@@ -231,8 +240,24 @@
         </div>
     </div>
 
+    <!-- НОВЫЙ ЭКРАН: ВЫБОР ЖАНРА -->
+    <div id="genre-screen" class="screen">
+        <h1>Выберите жанр</h1>
+        <div class="genre-grid" id="genre-list">
+            <!-- Кнопки генерируются JS -->
+        </div>
+        <button class="action-btn" style="background: rgba(255,255,255,0.1); color: #fff;" onclick="switchTab('home', document.querySelectorAll('.nav-item')[0])">Назад</button>
+    </div>
+
+    <!-- ЭКРАН ПОИСКА -->
     <div id="search-screen" class="screen">
+        <!-- БЕЙДЖ ПАРТНЕРА -->
+        <div id="partner-badge" class="partner-badge">В комнате с: Имя</div>
+
         <div class="tinder-card">
+            <!-- КНОПКА ВЫХОДА -->
+            <div class="exit-btn" onclick="exitSearch()">✕</div>
+
             <div class="poster-wrapper">
                 <img id="poster-blur" class="poster-blur" src="" alt="">
                 <img id="poster" class="tinder-img" src="" alt="">
@@ -250,9 +275,11 @@
         </div>
     </div>
 
+    <!-- МЕНЮ ДЛЯ ДВОИХ -->
     <div id="duo-menu-screen" class="screen">
         <h1>Режим для двоих</h1>
-        <div class="mode-card" onclick="createRoom()">
+        <!-- Теперь кнопка "Создать" ведет к выбору жанра -->
+        <div class="mode-card" onclick="selectMode('duo_create')">
             <div class="mode-icon">✨</div>
             <div class="mode-info"><h3>Создать комнату</h3><p>Получи уникальный код приглашения</p></div>
         </div>
@@ -275,7 +302,7 @@
         <div id="likes-list"></div>
     </div>
 
-    <!-- ЭКРАН АДМИНКИ (НОВЫЙ) -->
+    <!-- АДМИНКА -->
     <div id="admin-screen" class="screen">
         <h1>🛠 Админка</h1>
         <div class="stat-grid">
@@ -284,17 +311,14 @@
             <div class="stat-item"><div id="adm-rooms" class="stat-val">0</div><div class="stat-lbl">Комнаты</div></div>
             <div class="stat-item"><div id="adm-tickets" class="stat-val">0</div><div class="stat-lbl">Тикеты</div></div>
         </div>
-
         <h3>📢 Рассылка</h3>
-        <textarea id="broadcast-text" rows="3" placeholder="Введите текст для всех пользователей..."></textarea>
+        <textarea id="broadcast-text" rows="3" placeholder="Введите текст..."></textarea>
         <button class="action-btn" onclick="sendBroadcast()">🚀 Отправить всем</button>
-
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:30px; margin-bottom:10px;">
             <h3>📩 Тикеты</h3>
             <button onclick="loadAdminData()" style="background:none; border:none; color:var(--accent); font-size:1.2rem;">🔄</button>
         </div>
         <div id="tickets-list"></div>
-
         <button class="action-btn" style="background: rgba(255,255,255,0.1); color: #fff; margin-top: 30px;" onclick="switchTab('home')">Выйти из админки</button>
     </div>
 
@@ -308,7 +332,6 @@
         <div class="nav-item" onclick="showSupport()">
             <span class="nav-icon">📩</span><span>Помощь</span>
         </div>
-        <!-- СКРЫТАЯ КНОПКА АДМИНА -->
         <div id="nav-admin" class="nav-item" style="display: none; color: #ff4b4b;" onclick="switchTab('admin', this)">
             <span class="nav-icon">🔑</span><span>Админ</span>
         </div>
@@ -320,65 +343,56 @@
         tg.backgroundColor = '#0f172a';
         tg.headerColor = '#0f172a';
 
-        // ⚠️ ВАЖНО: Замени эту ссылку на свой новый ngrok URL при каждом запуске!
         const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev".replace(/\/$/, "");
 
         let isLoading = false;
         let abortController = null;
         let currentMovieId = null;
+        
+        // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
+        let currentGenre = 'all';
+        let currentMode = 'solo'; // 'solo' или 'duo_create'
+        let myRoomId = null;
+        let pollingInterval = null;
 
-        // --- УЛУЧШЕННАЯ ФУНКЦИЯ ПРОВЕРКИ АДМИНА (С УВЕДОМЛЕНИЯМИ) ---
+        // Список жанров (ID из Кинопоиска)
+        const GENRES = [
+            {id: 'all', name: '🎲 Случайные'},
+            {id: '1', name: '💥 Боевик'},
+            {id: '13', name: '🤡 Комедия'},
+            {id: '17', name: '😱 Ужасы'},
+            {id: '18', name: '🎭 Драма'},
+            {id: '12', name: '🧚 Фэнтези'},
+            {id: '6', name: '🚀 Фантастика'},
+            {id: '10', name: '🤠 Вестерн'}
+        ];
+
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        // 1. Проверка админа
         async function checkAdmin() {
             const user_id = tg.initDataUnsafe.user?.id;
-            
-            // Если вы тестируете в браузере, можете временно раскомментировать и вписать свой ID:
-            // const user_id = 123456789; 
-
-            if (!user_id) {
-                // Если не нашли ID, значит, приложение открыто не через Telegram или WebApp не инициализирован
-                // tg.showAlert("Ошибка: ID пользователя не найден");
-                return;
-            }
-
+            if (!user_id) return;
             try {
-                // Отправляем запрос с заголовком, чтобы пробить защиту Ngrok
                 const res = await fetch(`${API_BASE}/admin/check/${user_id}`, {
-                    headers: { 
-                        'ngrok-skip-browser-warning': 'true',
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'ngrok-skip-browser-warning': 'true', 'Content-Type': 'application/json' }
                 });
-
-                // Если сервер вернул не JSON, а HTML (ошибка Ngrok или 404/500)
-                const textData = await res.text();
-
-                try {
-                    const data = JSON.parse(textData);
-                    
-                    if (data.is_admin) {
-                        // Показываем кнопку только если сервер подтвердил
-                        document.getElementById('nav-admin').style.display = 'flex';
-                    } else {
-                        // Если сервер сказал "не админ", но вы точно админ, 
-                        // значит в main.py не совпадает SUPER_ADMIN_ID
-                        // console.log("Не админ");
-                    }
-                } catch (jsonError) {
-                    // Это значит, пришел HTML вместо JSON
-                    // tg.showAlert("Ошибка сервера: " + textData.substring(0, 50));
-                    console.error("HTML вместо JSON:", textData);
-                }
-
-            } catch (e) {
-                // Если вообще не удалось подключиться
-                // tg.showAlert("Ошибка сети: " + e.message);
-                console.error("Ошибка сети:", e);
-            }
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.is_admin) document.getElementById('nav-admin').style.display = 'flex';
+            } catch (e) { console.log("Silent admin check fail"); }
         }
-
-        // Запускаем проверку при старте
         checkAdmin();
 
+        // 2. Рендер кнопок жанров
+        function renderGenres() {
+            const container = document.getElementById('genre-list');
+            container.innerHTML = GENRES.map(g => 
+                `<div class="genre-btn" onclick="chooseGenre('${g.id}')">${g.name}</div>`
+            ).join('');
+        }
+        renderGenres();
+
+        // --- НАВИГАЦИЯ И ЛОГИКА ---
 
         function switchTab(screen, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -387,96 +401,135 @@
             if (el) el.classList.add('active');
 
             if (screen === 'profile') loadMyLikes();
-            if (screen === 'admin') loadAdminData(); // Загружаем данные админки
+            if (screen === 'admin') loadAdminData();
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // --- ЛОГИКА АДМИНКИ ---
-        async function loadAdminData() {
-            const user_id = tg.initDataUnsafe.user?.id;
-            try {
-                // Добавляем хедеры везде
-                const headers = { 'ngrok-skip-browser-warning': 'true' };
+        // Выбор режима (Один или Создать комнату)
+        function selectMode(mode) {
+            currentMode = mode;
+            switchTab('genre', document.querySelectorAll('.nav-item')[0]); // Переход к выбору жанра
+        }
 
-                const s_res = await fetch(`${API_BASE}/admin/stats/${user_id}`, { headers });
-                const stats = await s_res.json();
-                document.getElementById('adm-users').innerText = stats.users;
-                document.getElementById('adm-likes').innerText = stats.likes;
-                document.getElementById('adm-rooms').innerText = stats.rooms;
-                document.getElementById('adm-tickets').innerText = stats.tickets;
-
-                const t_res = await fetch(`${API_BASE}/admin/tickets/${user_id}`, { headers });
-                const tickets = await t_res.json();
-                const list = document.getElementById('tickets-list');
-                
-                if (tickets.length === 0) {
-                    list.innerHTML = '<div style="text-align:center; color:gray; padding:20px;">Нет новых обращений</div>';
-                } else {
-                    list.innerHTML = tickets.map(t => `
-                        <div class="ticket-card">
-                            <div class="ticket-header">
-                                <span>ID: ${t.user_id}</span>
-                                <span>${t.created_at}</span>
-                            </div>
-                            <div style="margin-bottom:10px; font-style:italic;">"${t.message}"</div>
-                            <div class="reply-box">
-                                <input type="text" id="reply-${t.id}" class="reply-input" placeholder="Ответ...">
-                                <button onclick="replyTicket(${t.id})" style="background:var(--accent); border:none; border-radius:8px; padding:0 15px; font-weight:bold;">➜</button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) { 
-               // tg.showAlert("Ошибка доступа к админ-панели"); 
+        // Выбор жанра -> Старт поиска или Создание комнаты
+        async function chooseGenre(id) {
+            currentGenre = id;
+            
+            if (currentMode === 'solo') {
+                startSearch(); // Сразу ищем
+            } else if (currentMode === 'duo_create') {
+                await createRoomImpl(); // Создаем комнату с этим жанром
             }
         }
 
-        async function replyTicket(ticketId) {
-            const text = document.getElementById(`reply-${ticketId}`).value;
-            const user_id = tg.initDataUnsafe.user?.id;
-            if (!text) return;
-
-            try {
-                await fetch(`${API_BASE}/admin/reply_ticket`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
-                    body: JSON.stringify({ admin_id: user_id, ticket_id: ticketId, text: text })
-                });
-                tg.showAlert("✅ Ответ отправлен!");
-                loadAdminData(); // Обновляем список
-            } catch (e) { tg.showAlert("Ошибка отправки"); }
+        function showDuoMenu() {
+            switchTab('duo-menu', document.querySelectorAll('.nav-item')[0]);
         }
 
-        async function sendBroadcast() {
-            const text = document.getElementById('broadcast-text').value;
-            const user_id = tg.initDataUnsafe.user?.id;
-            if (!text) return tg.showAlert("Введите текст!");
-            
-            if (!confirm("Вы уверены, что хотите отправить это сообщение ВСЕМ пользователям?")) return;
-
-            try {
-                const res = await fetch(`${API_BASE}/admin/broadcast`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
-                    body: JSON.stringify({ admin_id: user_id, text: text })
-                });
-                const data = await res.json();
-                tg.showAlert(`Рассылка запущена! Доставлено (примерно): ${data.sent}`);
-                document.getElementById('broadcast-text').value = "";
-            } catch (e) { tg.showAlert("Ошибка рассылки"); }
-        }
-
-
-        // --- СТАРЫЕ ФУНКЦИИ ---
-        function startSearch(mode) {
+        // Запуск экрана поиска
+        function startSearch(partnerName = null) {
             switchTab('search', document.querySelectorAll('.nav-item')[0]);
+            
+            const badge = document.getElementById('partner-badge');
+            if (partnerName) {
+                badge.style.display = 'block';
+                badge.innerText = `В комнате с: ${partnerName}`;
+            } else {
+                badge.style.display = 'none';
+            }
             loadMovie();
         }
 
-        function showSupport() {
-            tg.showAlert("🍿 MovieMatch v2.1\n\nБот и Приложение теперь работают вместе!");
+        // КНОПКА ВЫХОДА (КРЕСТИК)
+        async function exitSearch() {
+            if (!confirm("Закончить поиск и выйти?")) return;
+
+            // Если мы в комнате — нужно выйти из неё на сервере
+            if (myRoomId) {
+                const uid = tg.initDataUnsafe.user?.id;
+                try {
+                    await fetch(`${API_BASE}/leave_room`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+                        body: JSON.stringify({ user_id: uid, room_id: myRoomId })
+                    });
+                } catch(e) {}
+            }
+
+            // Сброс локального состояния
+            myRoomId = null;
+            if (pollingInterval) clearInterval(pollingInterval);
+            switchTab('home', document.querySelectorAll('.nav-item')[0]);
         }
 
+        // --- ЛОГИКА КОМНАТ ---
+
+        async function createRoomImpl() {
+            const uid = tg.initDataUnsafe.user?.id;
+            const name = tg.initDataUnsafe.user?.first_name || "Игрок 1";
+            
+            try {
+                const res = await fetch(`${API_BASE}/create_room`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+                    // Передаем жанр!
+                    body: JSON.stringify({ user_id: uid, user_name: name, genre: currentGenre })
+                });
+                const data = await res.json();
+                
+                myRoomId = data.room_id;
+                tg.showConfirm(`Код комнаты: ${data.room_id}\n\nОтправь другу и жди его входа!`, (ok) => {});
+                
+                // Ждем партнера
+                pollingInterval = setInterval(checkRoomStatus, 3000);
+                
+            } catch (e) { tg.showAlert("Ошибка создания комнаты"); }
+        }
+
+        async function checkRoomStatus() {
+            if (!myRoomId) return;
+            try {
+                const res = await fetch(`${API_BASE}/check_room/${myRoomId}`, {
+                    headers: {'ngrok-skip-browser-warning': 'true'}
+                });
+                const data = await res.json();
+                if (data.status === 'joined') {
+                    clearInterval(pollingInterval);
+                    tg.showAlert(`Игрок ${data.partner_name} вошел!`);
+                    startSearch(data.partner_name);
+                }
+            } catch(e) {}
+        }
+
+        function promptJoinRoom() {
+            const code = prompt("Введите 4-значный код:");
+            if (code) joinRoom(code);
+        }
+
+        async function joinRoom(code) {
+            const uid = tg.initDataUnsafe.user?.id;
+            const name = tg.initDataUnsafe.user?.first_name || "Игрок 2";
+            
+            try {
+                const res = await fetch(`${API_BASE}/join_room`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+                    body: JSON.stringify({ user_id: uid, user_name: name, room_id: code })
+                });
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    myRoomId = code;
+                    currentGenre = data.genre; // Применяем жанр комнаты!
+                    tg.showAlert("Успешно подключено!");
+                    startSearch(data.partner_name);
+                } else {
+                    tg.showAlert(data.message);
+                }
+            } catch (e) { tg.showAlert("Ошибка подключения"); }
+        }
+
+        // --- ЗАГРУЗКА ФИЛЬМА ---
         async function loadMovie() {
             if (isLoading && abortController) abortController.abort();
 
@@ -493,7 +546,9 @@
             poster.classList.remove('loaded');
 
             try {
-                const url = `${API_BASE}/get_movie?nocache=${Date.now()}`;
+                // ДОБАВИЛ GENRE В ЗАПРОС
+                const url = `${API_BASE}/get_movie?genre=${currentGenre}&nocache=${Date.now()}`;
+                
                 const response = await fetch(url, {
                     headers: { 'ngrok-skip-browser-warning': 'true' },
                     signal: abortController.signal
@@ -502,16 +557,13 @@
                 if (!response.ok) throw new Error("Server error");
                 const data = await response.json();
 
-                // ⚠️ СОХРАНЯЕМ ID ФИЛЬМА
                 currentMovieId = data.id;
-
                 title.innerText = data.title;
                 poster.src = data.poster;
                 posterBlur.src = data.poster;
-
-                desc.innerText = data.description || "Описание временно недоступно.";
-                rating.innerText = data.rating || "?.?";
-                meta.innerText = `${data.year || '----'} • ${data.genres || 'Кино'}`;
+                desc.innerText = data.description || "Нет описания";
+                rating.innerText = data.rating;
+                meta.innerText = `${data.year} • ${data.genres}`;
 
                 poster.onload = () => {
                     poster.classList.add('loaded');
@@ -519,7 +571,7 @@
                 };
             } catch (e) {
                 if (e.name !== 'AbortError') {
-                    title.innerText = "Сбой связи 🔄";
+                    title.innerText = "Фильмы кончились 😔";
                     isLoading = false;
                 }
             }
@@ -537,13 +589,12 @@
 
             isLoading = true;
             try {
-                // ⚠️ ОТПРАВЛЯЕМ MOVIE_ID НА СЕРВЕР
                 await fetch(`${API_BASE}/like`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
                     body: JSON.stringify({
                         user_id: user_id,
-                        movie_id: currentMovieId, // Отправляем ID
+                        movie_id: currentMovieId,
                         movie_title: titleText,
                         poster_url: posterUrl
                     })
@@ -552,10 +603,11 @@
                 loadMovie();
             } catch (e) {
                 isLoading = false;
-                tg.showAlert("Ошибка сохранения");
+                tg.showAlert("Ошибка сети");
             }
         }
 
+        // --- ПРОФИЛЬ ---
         async function loadMyLikes() {
             const list = document.getElementById('likes-list');
             const user_id = tg.initDataUnsafe.user?.id;
@@ -585,48 +637,64 @@
             }
         }
 
-        function showDuoMenu() {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('duo-menu-screen').classList.add('active');
-            tg.HapticFeedback.impactOccurred('medium');
-        }
-
-        async function createRoom() {
+        // --- АДМИНКА ---
+        async function loadAdminData() {
             const user_id = tg.initDataUnsafe.user?.id;
+            const headers = { 'ngrok-skip-browser-warning': 'true' };
             try {
-                const response = await fetch(`${API_BASE}/create_room`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
-                    body: JSON.stringify({user_id})
-                });
-                const data = await response.json();
-                tg.showConfirm(`Твой код: ${data.room_id}\n\nОтправь его партнеру. Ждем его входа?`, (ok) => {});
-            } catch (e) { tg.showAlert("Ошибка сервера"); }
+                const s = await (await fetch(`${API_BASE}/admin/stats/${user_id}`, { headers })).json();
+                document.getElementById('adm-users').innerText = s.users;
+                document.getElementById('adm-likes').innerText = s.likes;
+                document.getElementById('adm-rooms').innerText = s.rooms;
+                document.getElementById('adm-tickets').innerText = s.tickets;
+
+                const t = await (await fetch(`${API_BASE}/admin/tickets/${user_id}`, { headers })).json();
+                const list = document.getElementById('tickets-list');
+                
+                if (!t.length) list.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Пусто</div>';
+                else list.innerHTML = t.map(tik => `
+                    <div class="ticket-card">
+                        <div class="ticket-header"><span>${tik.user_id}</span></div>
+                        <div style="margin-bottom:8px">"${tik.message}"</div>
+                        <div class="reply-box">
+                            <input id="rep-${tik.id}" class="reply-input" placeholder="Ответ">
+                            <button onclick="reply(${tik.id})" style="background:var(--accent);border:none;border-radius:8px;padding:0 10px;">➜</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {}
         }
 
-        function promptJoinRoom() {
-            const code = prompt("Введите 4-значный код:");
-            if (code) joinRoom(code);
+        async function reply(tid) {
+            const txt = document.getElementById(`rep-${tid}`).value;
+            const uid = tg.initDataUnsafe.user?.id;
+            await fetch(`${API_BASE}/admin/reply_ticket`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json', 'ngrok-skip-browser-warning':'true'},
+                body: JSON.stringify({admin_id: uid, ticket_id: tid, text: txt})
+            });
+            loadAdminData();
         }
 
-        async function joinRoom(code) {
-            const user_id = tg.initDataUnsafe.user?.id;
-            try {
-                const response = await fetch(`${API_BASE}/join_room`, {
+        async function sendBroadcast() {
+            const txt = document.getElementById('broadcast-text').value;
+            const uid = tg.initDataUnsafe.user?.id;
+            if(confirm("Отправить всем?")) {
+                await fetch(`${API_BASE}/admin/broadcast`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
-                    body: JSON.stringify({user_id, room_id: code})
+                    headers: {'Content-Type':'application/json', 'ngrok-skip-browser-warning':'true'},
+                    body: JSON.stringify({admin_id: uid, text: txt})
                 });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    tg.showAlert("Готово! Теперь ваши лайки будут сравниваться.");
-                    startSearch('duo');
-                } else { tg.showAlert(data.message); }
-            } catch (e) { tg.showAlert("Ошибка входа"); }
+                tg.showAlert("Отправлено");
+            }
+        }
+
+        function showSupport() {
+            tg.showAlert("Поддержка работает через бота."); 
         }
 
         document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Киноман";
-        document.getElementById('user-id').innerText = "ID: " + (tg.initDataUnsafe.user?.id || "Неизвестно");
+        document.getElementById('user-id').innerText = "ID: " + (tg.initDataUnsafe.user?.id || "---");
     </script>
 </body>
 </html>
