@@ -75,31 +75,107 @@
         .status-closed { background: rgba(0, 230, 118, 0.2); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.4); }
         .admin-reply { margin-top: 10px; padding: 10px; background: rgba(56, 189, 248, 0.1); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 0.9rem; color: #e2e8f0; }
 
-        textarea {
-    width: 100%;
-    min-height: 100px; /* <--- ИЗМЕНИТЕ ЭТО ЗНАЧЕНИЕ (например 100px или 200px) */
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #fff;
-    padding: 10px;
-    border-radius: 12px;
-    margin: 10px 0;
-    font-family: inherit;
-    box-sizing: border-box;
-    resize: vertical; /* Разрешает пользователю самому тянуть за уголок */
-}
+            textarea {
+        width: 100%;
+        min-height: 100px; /* <--- ИЗМЕНИТЕ ЭТО ЗНАЧЕНИЕ (например 100px или 200px) */
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        padding: 10px;
+        border-radius: 12px;
+        margin: 10px 0;
+        font-family: inherit;
+        box-sizing: border-box;
+        resize: vertical; /* Разрешает пользователю самому тянуть за уголок */
+    }
 
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
+
+        /* --- НОВОГОДНИЙ ВИДЖЕТ --- */
+        .holiday-banner {
+            margin-top: 24px;
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(22, 163, 74, 0.1);
+        }
+
+        /* Анимация блика */
+        .holiday-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        .hb-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(255,215,0, 0.3)); }
+        .hb-info h3 { margin: 0; font-size: 1.1rem; color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.3); }
+        .hb-info p { margin: 4px 0 0; font-size: 0.85rem; color: #bbf7d0; }
+
+        /* Декорация на фоне */
+        .hb-decor {
+            position: absolute;
+            right: -10px;
+            bottom: -15px;
+            font-size: 5rem;
+            opacity: 0.05;
+            transform: rotate(-15deg);
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body>
 
-    <div id="home-screen" class="screen active">
+        <div id="home-screen" class="screen active">
         <h1>MovieMatch</h1>
-        <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
-        <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
+        
+        <!-- Карточка Один -->
+        <div class="mode-card" onclick="selectMode('solo')">
+            <div class="mode-icon">🍿</div>
+            <div class="mode-info">
+                <h3>Один</h3>
+                <p>Листай подборку для себя</p>
+            </div>
+        </div>
+
+        <!-- Карточка Вдвоем -->
+        <div class="mode-card" onclick="showDuoMenu()">
+            <div class="mode-icon">👫</div>
+            <div class="mode-info">
+                <h3>Вдвоем</h3>
+                <p>Найди общий матч с другом</p>
+            </div>
+        </div>
+
+        <!-- 👇👇👇 ВСТАВИТЬ ЭТОТ БЛОК НИЖЕ 👇👇👇 -->
+        <div class="holiday-banner">
+            <div class="hb-icon">🎄</div>
+            <div class="hb-info">
+                <h3>Новогоднее настроение</h3>
+                <p>Время укутаться в плед и включить любимое кино!</p>
+            </div>
+            <div class="hb-decor">🎅</div>
+        </div>
+        <!-- 👆👆👆 КОНЕЦ ВСТАВКИ 👆👆👆 -->
+
     </div>
+
 
     <div id="genre-screen" class="screen">
         <h1>Выберите жанр</h1>
