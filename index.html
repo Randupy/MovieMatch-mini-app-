@@ -75,7 +75,20 @@
         .status-closed { background: rgba(0, 230, 118, 0.2); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.4); }
         .admin-reply { margin-top: 10px; padding: 10px; background: rgba(56, 189, 248, 0.1); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 0.9rem; color: #e2e8f0; }
 
-        textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 12px; margin: 10px 0; font-family: inherit; box-sizing: border-box; }
+        textarea {
+    width: 100%;
+    min-height: 150px; /* <--- ИЗМЕНИТЕ ЭТО ЗНАЧЕНИЕ (например 100px или 200px) */
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 10px;
+    border-radius: 12px;
+    margin: 10px 0;
+    font-family: inherit;
+    box-sizing: border-box;
+    resize: vertical; /* Разрешает пользователю самому тянуть за уголок */
+}
+
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
     </style>
