@@ -280,11 +280,12 @@
         tg.backgroundColor = '#0f172a';
         tg.headerColor = '#0f172a';
 
+        // ⚠️ ВАЖНО: Замени эту ссылку на свой новый ngrok URL при каждом запуске!
         const API_BASE = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev".replace(/\/$/, "");
 
         let isLoading = false;
         let abortController = null;
-        let currentMovieId = null; // Добавили переменную для ID
+        let currentMovieId = null; // Переменная для хранения ID текущего фильма
 
         function switchTab(screen, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -302,7 +303,7 @@
         }
 
         function showSupport() {
-            tg.showAlert("🍿 MovieMatch v2.1\n\nЧерные рамки заменены на атмосферное размытие.");
+            tg.showAlert("🍿 MovieMatch v2.1\n\nБот и Приложение теперь работают вместе!");
         }
 
         async function loadMovie() {
@@ -330,7 +331,9 @@
                 if (!response.ok) throw new Error("Server error");
                 const data = await response.json();
 
-                currentMovieId = data.id; // Сохраняем ID фильма
+                // ⚠️ СОХРАНЯЕМ ID ФИЛЬМА
+                currentMovieId = data.id;
+
                 title.innerText = data.title;
                 poster.src = data.poster;
                 posterBlur.src = data.poster;
@@ -363,11 +366,16 @@
 
             isLoading = true;
             try {
-                // Добавили movie_id в отправляемые данные
+                // ⚠️ ОТПРАВЛЯЕМ MOVIE_ID НА СЕРВЕР
                 await fetch(`${API_BASE}/like`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-                    body: JSON.stringify({ user_id, movie_id: currentMovieId, movie_title: titleText, poster_url: posterUrl })
+                    body: JSON.stringify({ 
+                        user_id: user_id, 
+                        movie_id: currentMovieId, // Отправляем ID
+                        movie_title: titleText, 
+                        poster_url: posterUrl 
+                    })
                 });
                 isLoading = false;
                 loadMovie();
