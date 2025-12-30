@@ -91,130 +91,76 @@
 
         .reply-box { display: flex; gap: 10px; margin-top: 10px; }
         .reply-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #ffffff30; color: white; border-radius: 8px; padding: 8px; }
-            /* --- НОВОГОДНИЙ ВИДЖЕТ --- */
-        .holiday-banner {
-            margin-top: 24px;
-            background: linear-gradient(135deg, rgba(22, 163, 74, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
-            border: 1px solid rgba(74, 222, 128, 0.2);
-            border-radius: 24px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+     
+        /* --- УЮТНЫЙ ФОН (ВАРИАНТ 3) --- */
+                .cozy-filler {
+            flex: 1; 
+            width: 100%;
+            margin-top: 30px;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(22, 163, 74, 0.1);
+            /* Убираем overflow:hidden, чтобы искорки могли летать */
+            border-radius: 30px 30px 0 0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
         }
 
-        /* Анимация блика */
-        .holiday-banner::before {
+        .cozy-image {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('https://images.unsplash.com/photo-1576014131341-fe1486ade247?q=80&w=600&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center bottom;
+            opacity: 0.8;
+            border-radius: 30px 30px 0 0;
+        }
+
+        /* ИСПРАВЛЕНИЕ: Градиент накладываем сверху псевдо-элементом */
+        .cozy-image::after {
             content: '';
             position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            animation: shine 3s infinite;
+            top: 0; left: 0; right: 0; bottom: 0;
+            /* Плавный переход от цвета фона приложения к прозрачному */
+            background: linear-gradient(to bottom, #0f172a 0%, rgba(15, 23, 42, 0) 60%);
         }
 
-        @keyframes shine {
-            0% { left: -100%; }
-            20% { left: 100%; }
-            100% { left: 100%; }
-        }
 
-        .hb-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(255,215,0, 0.3)); }
-        .hb-info h3 { margin: 0; font-size: 1.1rem; color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.3); }
-        .hb-info p { margin: 4px 0 0; font-size: 0.85rem; color: #bbf7d0; }
-
-        /* Декорация на фоне */
-        .hb-decor {
-            position: absolute;
-            right: -10px;
-            bottom: -15px;
-            font-size: 5rem;
-            opacity: 0.05;
-            transform: rotate(-15deg);
-            pointer-events: none;
-        }
-        /* --- НОВОГОДНЯЯ ЕЛКА И ЗАПОЛНЕНИЕ ПУСТОТЫ --- */
-
-        /* Контейнер, который занимает ВСЁ свободное место */
-        .christmas-filler {
-            flex: 1; /* Растягивается на всю высоту */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end; /* Прижимает елку к низу */
-            align-items: center;
-            padding-bottom: 70px; /* Отступ от навигации */
+        .cozy-text {
             position: relative;
-            overflow: hidden;
-            margin-top: 20px;
+            z-index: 2;
+            padding-bottom: 90px; /* Отступ чтобы не перекрывать навигацию */
+            text-align: center;
         }
 
-        /* Сама елка (состоит из 3 треугольников) */
-        .tree-layer {
-            width: 0; height: 0;
-            border-left: solid transparent;
-            border-right: solid transparent;
-            border-bottom: solid #15803d; /* Зеленый цвет */
-            position: relative;
-            filter: drop-shadow(0 0 15px rgba(34, 197, 94, 0.5)); /* Свечение */
-            z-index: 1;
+        .cozy-text h4 {
+            margin: 0;
+            color: #fbbf24; /* Золотой цвет */
+            font-size: 1.1rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            letter-spacing: 1px;
         }
 
-        .tree-top {
-            border-left-width: 40px; border-right-width: 40px; border-bottom-width: 50px;
-            margin-bottom: -15px; z-index: 3;
-        }
-        .tree-mid {
-            border-left-width: 60px; border-right-width: 60px; border-bottom-width: 70px;
-            margin-bottom: -15px; z-index: 2;
-        }
-        .tree-bot {
-            border-left-width: 80px; border-right-width: 80px; border-bottom-width: 90px;
-            z-index: 1;
+        .cozy-text span {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        /* Звезда */
-        .tree-star {
-            font-size: 2rem;
-            color: #fbbf24;
-            filter: drop-shadow(0 0 10px #fbbf24);
-            margin-bottom: -10px;
-            z-index: 4;
-            animation: star-pulse 2s infinite alternate;
-        }
-
-        /* Огоньки гирлянды */
-        .light {
+        /* Анимация искорок */
+        .sparkle {
             position: absolute;
-            width: 8px; height: 8px;
+            width: 4px; height: 4px;
+            background: #fff;
             border-radius: 50%;
-            animation: blink 1s infinite alternate;
+            box-shadow: 0 0 10px #fff;
+            animation: rise 4s infinite ease-in;
+            opacity: 0;
         }
 
-        /* Позиции огоньков */
-        .l1 { top: 20px; left: -10px; background: #ef4444; animation-delay: 0s; }
-        .l2 { top: 30px; left: 5px; background: #fbbf24; animation-delay: 0.3s; }
-        .l3 { top: 35px; left: -25px; background: #3b82f6; animation-delay: 0.6s; }
-        .l4 { top: 40px; left: 15px; background: #ec4899; animation-delay: 0.9s; }
-
-        .l5 { top: 50px; left: -15px; background: #fbbf24; animation-delay: 0.2s; }
-        .l6 { top: 60px; left: 25px; background: #ef4444; animation-delay: 0.5s; }
-        .l7 { top: 65px; left: -40px; background: #3b82f6; animation-delay: 0.8s; }
-
-        /* Снег на фоне */
-        .snow {
-            position: absolute;
-            top: -10px;
-            color: #fff;
-            opacity: 0.3;
-            animation: fall linear infinite;
+        @keyframes rise {
+            0% { transform: translateY(100%) scale(0); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(0%) scale(1.5); opacity: 0; }
         }
-
-        @keyframes star-pulse { from { transform: scale(1); } to { transform: scale(1.2); text-shadow: 0 0 20px gold; } }
-        @keyframes blink { from { opacity: 0.4; box-shadow: 0 0 0 transparent; } to { opacity: 1; box-shadow: 0 0 10px currentColor; } }
-        @keyframes fall { to { transform: translateY(100vh); } }
 
     </style>
 </head>
@@ -224,43 +170,24 @@
         <h1>MovieMatch</h1>
         <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
         <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
-                <!-- ... твой код карточек ... -->
+         <!-- 👇👇👇 УЮТНЫЙ ФОН 👇👇👇 -->
+        <div class="cozy-filler">
+            <div class="cozy-image"></div>
 
-        <!-- 👇👇👇 НОВОГОДНЯЯ ЕЛКА 👇👇👇 -->
-        <div class="christmas-filler">
-            <!-- Снежинки -->
-            <div class="snow" style="left: 10%; font-size: 10px; animation-duration: 5s;">❄</div>
-            <div class="snow" style="left: 30%; font-size: 15px; animation-duration: 7s;">❅</div>
-            <div class="snow" style="left: 70%; font-size: 12px; animation-duration: 6s;">❄</div>
-            <div class="snow" style="left: 90%; font-size: 8px; animation-duration: 8s;">❅</div>
+            <!-- Искорки (разные задержки для естественности) -->
+            <div class="sparkle" style="left: 20%; animation-duration: 5s; animation-delay: 0s;"></div>
+            <div class="sparkle" style="left: 50%; animation-duration: 7s; animation-delay: 2s;"></div>
+            <div class="sparkle" style="left: 80%; animation-duration: 6s; animation-delay: 1s;"></div>
+            <div class="sparkle" style="left: 35%; animation-duration: 8s; animation-delay: 4s;"></div>
 
-            <!-- Звезда -->
-            <div class="tree-star">★</div>
-
-            <!-- Слои елки с гирляндами -->
-            <div class="tree-layer tree-top">
-                <div class="light l1"></div>
-                <div class="light l2"></div>
-            </div>
-            <div class="tree-layer tree-mid">
-                <div class="light l3"></div>
-                <div class="light l4"></div>
-            </div>
-            <div class="tree-layer tree-bot">
-                <div class="light l5"></div>
-                <div class="light l6"></div>
-                <div class="light l7"></div>
-            </div>
-            
-            <!-- Надпись -->
-            <div style="margin-top: 15px; font-size: 0.8rem; color: #4ade80; opacity: 0.8;">
-                С Новым Годом! 🎅
+            <div class="cozy-text">
+                <h4>С Праздниками! ✨</h4>
+                <span>Выбирай фильм и наслаждайся</span>
             </div>
         </div>
-        <!-- 👆👆👆 КОНЕЦ ЕЛКИ 👆👆👆 -->
+        <!-- 👆👆👆 КОНЕЦ ВСТАВКИ 👆👆👆 -->
 
     </div>
-
     </div>
 
     <div id="genre-screen" class="screen">
