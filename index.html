@@ -278,7 +278,6 @@
     <!-- ЭКРАН АДМИНКИ (НОВЫЙ) -->
     <div id="admin-screen" class="screen">
         <h1>🛠 Админка</h1>
-
         <div class="stat-grid">
             <div class="stat-item"><div id="adm-users" class="stat-val">0</div><div class="stat-lbl">Юзеры</div></div>
             <div class="stat-item"><div id="adm-likes" class="stat-val">0</div><div class="stat-lbl">Лайки</div></div>
@@ -307,7 +306,7 @@
             <span class="nav-icon">👤</span><span>Профиль</span>
         </div>
         <div class="nav-item" onclick="showSupport()">
-            <span class="nav-icon">🛠</span><span>Помощь</span>
+            <span class="nav-icon">📩</span><span>Помощь</span>
         </div>
         <!-- СКРЫТАЯ КНОПКА АДМИНА -->
         <div id="nav-admin" class="nav-item" style="display: none; color: #ff4b4b;" onclick="switchTab('admin', this)">
@@ -328,13 +327,21 @@
         let abortController = null;
         let currentMovieId = null;
 
-                // ЗАМЕНИТЕ ФУНКЦИЮ checkAdmin НА ЭТУ:
+        // --- УЛУЧШЕННАЯ ФУНКЦИЯ ПРОВЕРКИ АДМИНА (С УВЕДОМЛЕНИЯМИ) ---
         async function checkAdmin() {
             const user_id = tg.initDataUnsafe.user?.id;
-            if (!user_id) return;
+            
+            // Если вы тестируете в браузере, можете временно раскомментировать и вписать свой ID:
+            // const user_id = 123456789; 
+
+            if (!user_id) {
+                // Если не нашли ID, значит, приложение открыто не через Telegram или WebApp не инициализирован
+                // tg.showAlert("Ошибка: ID пользователя не найден");
+                return;
+            }
 
             try {
-                // ДОБАВЛЕН HEADER 'ngrok-skip-browser-warning'
+                // Отправляем запрос с заголовком, чтобы пробить защиту Ngrok
                 const res = await fetch(`${API_BASE}/admin/check/${user_id}`, {
                     headers: { 
                         'ngrok-skip-browser-warning': 'true',
@@ -342,24 +349,34 @@
                     }
                 });
 
-                // Если сервер вернул ошибку (не 200 OK)
-                if (!res.ok) {
-                    console.error("Server Error:", res.status);
-                    return;
+                // Если сервер вернул не JSON, а HTML (ошибка Ngrok или 404/500)
+                const textData = await res.text();
+
+                try {
+                    const data = JSON.parse(textData);
+                    
+                    if (data.is_admin) {
+                        // Показываем кнопку только если сервер подтвердил
+                        document.getElementById('nav-admin').style.display = 'flex';
+                    } else {
+                        // Если сервер сказал "не админ", но вы точно админ, 
+                        // значит в main.py не совпадает SUPER_ADMIN_ID
+                        // console.log("Не админ");
+                    }
+                } catch (jsonError) {
+                    // Это значит, пришел HTML вместо JSON
+                    // tg.showAlert("Ошибка сервера: " + textData.substring(0, 50));
+                    console.error("HTML вместо JSON:", textData);
                 }
 
-                const data = await res.json();
-                
-                if (data.is_admin) {
-                    document.getElementById('nav-admin').style.display = 'flex';
-                }
-            } catch (e) { 
-                console.error("Admin check failed", e); 
+            } catch (e) {
+                // Если вообще не удалось подключиться
+                // tg.showAlert("Ошибка сети: " + e.message);
+                console.error("Ошибка сети:", e);
             }
         }
 
-
-        // Запускаем проверку
+        // Запускаем проверку при старте
         checkAdmin();
 
 
@@ -378,19 +395,20 @@
         async function loadAdminData() {
             const user_id = tg.initDataUnsafe.user?.id;
             try {
-                // Статистика
-                const s_res = await fetch(`${API_BASE}/admin/stats/${user_id}`);
+                // Добавляем хедеры везде
+                const headers = { 'ngrok-skip-browser-warning': 'true' };
+
+                const s_res = await fetch(`${API_BASE}/admin/stats/${user_id}`, { headers });
                 const stats = await s_res.json();
                 document.getElementById('adm-users').innerText = stats.users;
                 document.getElementById('adm-likes').innerText = stats.likes;
                 document.getElementById('adm-rooms').innerText = stats.rooms;
                 document.getElementById('adm-tickets').innerText = stats.tickets;
 
-                // Тикеты
-                const t_res = await fetch(`${API_BASE}/admin/tickets/${user_id}`);
+                const t_res = await fetch(`${API_BASE}/admin/tickets/${user_id}`, { headers });
                 const tickets = await t_res.json();
                 const list = document.getElementById('tickets-list');
-
+                
                 if (tickets.length === 0) {
                     list.innerHTML = '<div style="text-align:center; color:gray; padding:20px;">Нет новых обращений</div>';
                 } else {
@@ -408,8 +426,8 @@
                         </div>
                     `).join('');
                 }
-            } catch (e) {
-                tg.showAlert("Ошибка доступа к админ-панели");
+            } catch (e) { 
+               // tg.showAlert("Ошибка доступа к админ-панели"); 
             }
         }
 
@@ -421,7 +439,7 @@
             try {
                 await fetch(`${API_BASE}/admin/reply_ticket`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
                     body: JSON.stringify({ admin_id: user_id, ticket_id: ticketId, text: text })
                 });
                 tg.showAlert("✅ Ответ отправлен!");
@@ -433,13 +451,13 @@
             const text = document.getElementById('broadcast-text').value;
             const user_id = tg.initDataUnsafe.user?.id;
             if (!text) return tg.showAlert("Введите текст!");
-
+            
             if (!confirm("Вы уверены, что хотите отправить это сообщение ВСЕМ пользователям?")) return;
 
             try {
                 const res = await fetch(`${API_BASE}/admin/broadcast`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
                     body: JSON.stringify({ admin_id: user_id, text: text })
                 });
                 const data = await res.json();
