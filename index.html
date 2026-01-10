@@ -607,7 +607,23 @@
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 }
 
-        function selectMode(mode) { currentMode = mode; switchTab('genre', document.querySelectorAll('.nav-item')[0]); }
+        function selectMode(mode) {
+    // Если мы были в поиске и решили сменить режим — закрываем старый поиск
+    if (isSessionActive) {
+        isSessionActive = false;
+        if (pollingInterval) clearInterval(pollingInterval);
+        // Не вызываем exitSearch с confirm, просто тихо сбрасываем флаг
+    }
+
+    currentMode = mode;
+
+    if (mode === 'solo') {
+        switchTab('genre', document.querySelectorAll('.nav-item')[0]);
+    } else if (mode === 'duo_create') {
+        // Режим создания комнаты вдвоем
+        switchTab('genre', document.querySelectorAll('.nav-item')[0]);
+    }
+}
         async function chooseGenre(id) {
             currentGenre = id;
             if (currentMode === 'solo') startSearch();
