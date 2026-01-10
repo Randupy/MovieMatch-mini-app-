@@ -493,16 +493,36 @@
         renderGenres();
 
         function switchTab(screen, el) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(screen + '-screen').classList.add('active');
-            if (el) el.classList.add('active');
+    // 1. Скрываем все экраны через display, чтобы избежать конфликтов со стилями
+    document.querySelectorAll('.screen').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+    });
 
-            if(screen === 'profile') loadMyLikes();
-            if(screen === 'admin') loadAdminData();
-            if(screen === 'support') loadMyTickets();
-            tg.HapticFeedback.impactOccurred('medium');
-        }
+    // 2. Снимаем активный класс с кнопок навигации
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+    // 3. Пытаемся найти экран (проверяем оба варианта ID: 'screen-name' и 'name-screen')
+    let targetScreen = document.getElementById('screen-' + screen) || document.getElementById(screen + '-screen');
+
+    if (targetScreen) {
+        targetScreen.style.display = 'block';
+        targetScreen.classList.add('active');
+    }
+
+    // 4. Подсвечиваем кнопку в меню
+    if (el) el.classList.add('active');
+
+    // 5. Загружаем данные в зависимости от вкладки
+    if(screen === 'profile') loadMyLikes();
+    if(screen === 'admin') loadAdminData();
+    if(screen === 'support') loadMyTickets();
+
+    // 6. Виброотклик
+    if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+}
 
         // --- ПОДДЕРЖКА ---
         async function createTicket() {
@@ -555,20 +575,30 @@
 
         // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
         function handleSearchTab() {
-    // 1. Визуально переключаем нижнюю панель (делаем первую кнопку активной)
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item')[0].classList.add('active');
+    // 1. Управляем подсветкой кнопок в меню
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(el => el.classList.remove('active'));
+    if (navItems[0]) navItems[0].classList.add('active');
 
-    // 2. Скрываем все экраны
-    document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
+    // 2. Скрываем абсолютно все экраны
+    document.querySelectorAll('.screen').forEach(el => {
+        el.style.display = 'none';
+    });
 
-    // 3. Решаем, какой экран показать
+    // 3. Логика показа нужного экрана
     if (isSessionActive) {
-        // Если сессия идет — возвращаем экран с фильмом
-        document.getElementById('screen-search').style.display = 'block';
+        // Если поиск запущен, показываем экран ленты
+        const searchScreen = document.getElementById('screen-search');
+        if (searchScreen) {
+            searchScreen.style.display = 'block';
+        } else {
+            // Фолбэк: если вдруг ID не найден, идем на главную
+            document.getElementById('screen-home').style.display = 'block';
+        }
     } else {
-        // Если сессии нет — показываем главное меню (выбор жанра)
-        document.getElementById('screen-home').style.display = 'block';
+        // Если поиск не запущен, показываем выбор жанров
+        const homeScreen = document.getElementById('screen-home');
+        if (homeScreen) homeScreen.style.display = 'block';
     }
 }
 
