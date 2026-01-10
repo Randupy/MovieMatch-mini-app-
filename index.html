@@ -434,7 +434,7 @@
     </div>
 
             <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('home', this)">
+        <div class="nav-item active" onclick="handleSearchTab()">
             <span class="nav-icon">🏠</span><span>Главная</span>
         </div>
         <div class="nav-item" onclick="switchTab('profile', this)">
@@ -466,6 +466,7 @@
         let currentMode = 'solo';
         let myRoomId = null;
         let pollingInterval = null;
+        let isSessionActive = false; // Флаг: идет ли сейчас просмотр ленты
 
         const GENRES = [
             {id: 'all', name: '🎲 Случайные'}, {id: '1', name: '💥 Боевик'}, {id: '13', name: '🤡 Комедия'},
@@ -553,6 +554,23 @@
         }
 
         // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
+        function handleSearchTab() {
+        // Подсвечиваем первую кнопку меню
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(el => el.classList.remove('active'));
+        if(navItems[0]) navItems[0].classList.add('active');
+
+        if (isSessionActive) {
+            // Если сессия идет — просто показываем экран поиска (фильм там уже есть)
+            document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
+            document.getElementById('screen-search').style.display = 'block';
+        } else {
+            // Если сессии нет — идем на главную выбирать жанр
+            document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
+            document.getElementById('screen-home').style.display = 'block';
+        }
+    }
+
         function selectMode(mode) { currentMode = mode; switchTab('genre', document.querySelectorAll('.nav-item')[0]); }
         async function chooseGenre(id) {
             currentGenre = id;
@@ -561,6 +579,7 @@
         }
         function showDuoMenu() { switchTab('duo-menu', document.querySelectorAll('.nav-item')[0]); }
         function startSearch(partnerName = null) {
+            isSessionActive = true; // <--- !!! НОВАЯ СТРОКА !!!
             switchTab('search', document.querySelectorAll('.nav-item')[0]);
             const badge = document.getElementById('partner-badge');
             if (partnerName) { badge.style.display = 'block'; badge.innerText = `В комнате с: ${partnerName}`; }
@@ -569,12 +588,16 @@
         }
         async function exitSearch() {
             if (!confirm("Выйти?")) return;
+            isSessionActive = false; // <--- !!! НОВАЯ СТРОКА !!!
             if (myRoomId) {
                 const uid = tg.initDataUnsafe.user?.id;
                 try { await fetch(`${API_BASE}/leave_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, room_id: myRoomId }) }); } catch(e){}
             }
             myRoomId = null;
             if (pollingInterval) clearInterval(pollingInterval);
+            // Очищаем постер при выходе, чтобы в следующий раз загрузился новый
+            document.getElementById('poster').classList.remove('loaded');
+            document.getElementById('poster').src = "";
             switchTab('home', document.querySelectorAll('.nav-item')[0]);
         }
 
@@ -606,7 +629,7 @@
             try {
                 const res = await fetch(`${API_BASE}/join_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, user_name: name, room_id: code }) });
                 const data = await res.json();
-                if (data.status === 'success') { myRoomId = code; currentGenre = data.genre; tg.showAlert("ОК!"); startSearch(data.partner_name); }
+                if (data.status === 'success') { myRoomId = code; currentGenre = data.genre; tg.showAlert("Вы успешно присоединились к комнате!"); startSearch(data.partner_name); }
                 else tg.showAlert(data.message);
             } catch (e) { tg.showAlert("Ошибка"); }
         }
