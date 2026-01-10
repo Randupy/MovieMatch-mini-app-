@@ -555,21 +555,22 @@
 
         // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
         function handleSearchTab() {
-        // Подсвечиваем первую кнопку меню
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(el => el.classList.remove('active'));
-        if(navItems[0]) navItems[0].classList.add('active');
+    // 1. Визуально переключаем нижнюю панель (делаем первую кнопку активной)
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-item')[0].classList.add('active');
 
-        if (isSessionActive) {
-            // Если сессия идет — просто показываем экран поиска (фильм там уже есть)
-            document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
-            document.getElementById('screen-search').style.display = 'block';
-        } else {
-            // Если сессии нет — идем на главную выбирать жанр
-            document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
-            document.getElementById('screen-home').style.display = 'block';
-        }
+    // 2. Скрываем все экраны
+    document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
+
+    // 3. Решаем, какой экран показать
+    if (isSessionActive) {
+        // Если сессия идет — возвращаем экран с фильмом
+        document.getElementById('screen-search').style.display = 'block';
+    } else {
+        // Если сессии нет — показываем главное меню (выбор жанра)
+        document.getElementById('screen-home').style.display = 'block';
     }
+}
 
         function selectMode(mode) { currentMode = mode; switchTab('genre', document.querySelectorAll('.nav-item')[0]); }
         async function chooseGenre(id) {
