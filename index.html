@@ -314,7 +314,9 @@
         .garland-title .bulb:nth-child(4) { transform: translateY(-2px); }
         .garland-title .bulb:nth-child(5) { transform: translateY(-5px); }
 
+
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -736,6 +738,27 @@
     const uid = tg.initDataUnsafe.user?.id;
     if (!uid) return;
 
+    // ПРОВЕРКА СОСТОЯНИЯ КОМНАТЫ (для режима вдвоем)
+    if (myRoomId) {
+        try {
+            const checkRes = await fetch(`${API_BASE}/check_room/${myRoomId}`, {
+                headers: { 'ngrok-skip-browser-warning': 'true' }
+            });
+            const statusData = await checkRes.json();
+            
+            // Если партнер вышел или комната удалена, сервер вернет 'waiting' или ошибку
+            if (statusData.status === 'waiting') {
+                tg.showAlert("Партнер покинул комнату. Переходим в соло-режим.");
+                myRoomId = null;
+                // Скрываем бейдж партнера, если он есть в верстке
+                const badge = document.getElementById('partner-badge');
+                if (badge) badge.style.display = 'none';
+            }
+        } catch (e) {
+            console.error("Ошибка проверки комнаты:", e);
+        }
+    }
+
     if (isLoading && abortController) abortController.abort();
 
     isLoading = true;
@@ -785,32 +808,73 @@
 }
 
 
-        async function handleLike() {
-            const uid = tg.initDataUnsafe.user?.id;
-            if(!uid) return;
-            isLoading = true;
-            try {
-                await fetch(`${API_BASE}/like`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: uid, movie_id: currentMovieId, movie_title: document.getElementById('title').innerText, poster_url: document.getElementById('poster').src })
-                });
-                isLoading = false; loadMovie();
-            } catch(e) { isLoading = false; }
+       async function handleLike() {
+    const uid = tg.initDataUnsafe.user?.id;
+    if(!uid || !currentMovieId || isLoading) return;
+
+    isLoading = true;
+    const title = document.getElementById('title').innerText;
+    const poster = document.getElementById('poster').src;
+
+    try {
+        const res = await fetch(`${API_BASE}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+                user_id: uid,
+                movie_id: currentMovieId,
+                movie_title: title,
+                poster_url: poster
+            })
+        });
+
+        const data = await res.json();
+
+        // ЛОГИКА МЭТЧА
+        if (data.status === 'match') {
+            // Вибрация
+            tg.HapticFeedback.notificationOccurred('success');
+
+            // Конфетти
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            // Всплывающее окно Telegram
+            tg.showPopup({
+                title: '🎉 У вас мэтч!',
+                message: `Вы оба хотите посмотреть "${title}"`,
+                buttons: [{type: 'ok', text: 'Круто!'}]
+            });
         }
 
-        async function handleDislike() {
+        isLoading = false;
+        loadMovie();
+    } catch(e) {
+        console.error(e);
+        isLoading = false;
+    }
+}
+
+async function handleDislike() {
     if (isLoading) return;
     const uid = tg.initDataUnsafe.user?.id;
     const title = document.getElementById('title').innerText;
 
-    // Сразу грузим следующий, чтобы не ждать
     loadMovie();
 
-    // В фоне отправляем на сервер инфу, что фильм просмотрен
     try {
         await fetch(`${API_BASE}/dislike`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+            },
             body: JSON.stringify({
                 user_id: uid,
                 movie_id: currentMovieId,
