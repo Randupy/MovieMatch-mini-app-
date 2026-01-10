@@ -654,16 +654,45 @@
 }
 
         async function createRoomImpl() {
-            const uid = tg.initDataUnsafe.user?.id;
-            const name = tg.initDataUnsafe.user?.first_name || "Игрок 1";
-            try {
-                const res = await fetch(`${API_BASE}/create_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, user_name: name, genre: currentGenre }) });
-                const data = await res.json();
-                myRoomId = data.room_id;
-                tg.showConfirm(`Код: ${data.room_id}`, (ok) => {});
-                pollingInterval = setInterval(checkRoomStatus, 3000);
-            } catch (e) { tg.showAlert("Ошибка"); }
+    const uid = tg.initDataUnsafe.user?.id;
+    const name = tg.initDataUnsafe.user?.first_name || "Игрок 1";
+
+    try {
+        const res = await fetch(`${API_BASE}/create_room`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Пропускаем страницу-предупреждение ngrok
+                'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+                user_id: uid,
+                user_name: name,
+                genre: currentGenre
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error(`Ошибка сервера: ${res.status}`);
         }
+
+        const data = await res.json();
+
+        if (data && data.room_id) {
+            myRoomId = data.room_id;
+            tg.showConfirm(`Код: ${data.room_id}`, (ok) => {});
+
+            // Сбрасываем старый интервал перед запуском нового
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(checkRoomStatus, 3000);
+        } else {
+            tg.showAlert("Сервер вернул пустой код комнаты");
+        }
+    } catch (e) {
+        console.error(e);
+        tg.showAlert("Ошибка при создании комнаты");
+    }
+}
 
         async function checkRoomStatus() {
             if (!myRoomId) return;
