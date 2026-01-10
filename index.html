@@ -469,6 +469,7 @@
         let myRoomId = null;
         let pollingInterval = null;
         let isSessionActive = false; // Флаг: идет ли сейчас просмотр ленты
+        let lastMatchMovie = "";
 
         const GENRES = [
             {id: 'all', name: '🎲 Случайные'}, {id: '1', name: '💥 Боевик'}, {id: '13', name: '🤡 Комедия'},
@@ -713,13 +714,63 @@
 }
 
         async function checkRoomStatus() {
-            if (!myRoomId) return;
-            try {
-                const res = await fetch(`${API_BASE}/check_room/${myRoomId}`, {headers: {'ngrok-skip-browser-warning': 'true'}});
-                const data = await res.json();
-                if (data.status === 'joined') { clearInterval(pollingInterval); tg.showAlert("Друг вошел!"); startSearch(data.partner_name); }
-            } catch(e) {}
+    if (!myRoomId) return;
+    const uid = tg.initDataUnsafe.user?.id;
+
+    try {
+        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ (вошел ли партнер или не вышел ли он)
+        const res = await fetch(`${API_BASE}/check_room/${myRoomId}`, {
+            headers: {'ngrok-skip-browser-warning': 'true'}
+        });
+        const data = await res.json();
+
+        if (data.status === 'joined') {
+            const partnerBadge = document.getElementById('partner-name');
+            if (partnerBadge) partnerBadge.innerText = data.partner_name;
+
+            // Если мы всё еще на экране ожидания — переключаем в поиск
+            if (currentTab === 'waiting') {
+                isSessionActive = true;
+                switchTab('search', document.querySelectorAll('.nav-item')[0]);
+                loadMovie();
+            }
+        } else if (data.status === 'waiting' && isSessionActive) {
+            // Если мы были в поиске, а статус стал 'waiting' — значит партнер вышел
+            tg.showAlert("Партнер покинул комнату.");
+            myRoomId = null;
+            isSessionActive = false;
+            switchTab('home', document.querySelectorAll('.nav-item')[0]);
         }
+
+        // 2. ПРОВЕРКА МЭТЧЕЙ (для обоих пользователей)
+        // Этот запрос вернет данные, если за последние 10 секунд случился мэтч
+        const matchRes = await fetch(`${API_BASE}/check_matches/${uid}`, {
+            headers: {'ngrok-skip-browser-warning': 'true'}
+        });
+        const matchData = await matchRes.json();
+
+        if (matchData.status === 'match' && matchData.movie !== lastMatchMovie) {
+            lastMatchMovie = matchData.movie; // Запоминаем, чтобы не дублировать
+
+            // Запускаем праздник!
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            tg.showPopup({
+                title: '🎉 У ВАС МЭТЧ!',
+                message: `Вы оба хотите посмотреть "${matchData.movie}"`,
+                buttons: [{type: 'ok', text: 'Ура!'}]
+            });
+
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+    } catch (e) {
+        console.error("Ошибка в checkRoomStatus:", e);
+    }
+}
 
         function promptJoinRoom() { const code = prompt("Введите код:"); if (code) joinRoom(code); }
         async function joinRoom(code) {
@@ -745,7 +796,7 @@
                 headers: { 'ngrok-skip-browser-warning': 'true' }
             });
             const statusData = await checkRes.json();
-            
+
             // Если партнер вышел или комната удалена, сервер вернет 'waiting' или ошибку
             if (statusData.status === 'waiting') {
                 tg.showAlert("Партнер покинул комнату. Переходим в соло-режим.");
