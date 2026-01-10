@@ -583,23 +583,28 @@
     // 2. Скрываем абсолютно все экраны
     document.querySelectorAll('.screen').forEach(el => {
         el.style.display = 'none';
+        el.classList.remove('active');
     });
 
     // 3. Логика показа нужного экрана
     if (isSessionActive) {
-        // Если поиск запущен, показываем экран ленты
-        const searchScreen = document.getElementById('screen-search');
+        // Ищем экран поиска (по обоим вариантам ID)
+        const searchScreen = document.getElementById('search-screen') || document.getElementById('screen-search');
         if (searchScreen) {
             searchScreen.style.display = 'block';
-        } else {
-            // Фолбэк: если вдруг ID не найден, идем на главную
-            document.getElementById('screen-home').style.display = 'block';
+            searchScreen.classList.add('active');
         }
     } else {
-        // Если поиск не запущен, показываем выбор жанров
-        const homeScreen = document.getElementById('screen-home');
-        if (homeScreen) homeScreen.style.display = 'block';
+        // Ищем главный экран (у тебя в HTML он home-screen)
+        const homeScreen = document.getElementById('home-screen') || document.getElementById('screen-home');
+        if (homeScreen) {
+            homeScreen.style.display = 'block';
+            homeScreen.classList.add('active');
+        }
     }
+
+    // Виброотклик при нажатии на домик
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 }
 
         function selectMode(mode) { currentMode = mode; switchTab('genre', document.querySelectorAll('.nav-item')[0]); }
@@ -618,19 +623,35 @@
             loadMovie();
         }
         async function exitSearch() {
-            if (!confirm("Выйти?")) return;
-            isSessionActive = false; // <--- !!! НОВАЯ СТРОКА !!!
-            if (myRoomId) {
-                const uid = tg.initDataUnsafe.user?.id;
-                try { await fetch(`${API_BASE}/leave_room`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: uid, room_id: myRoomId }) }); } catch(e){}
-            }
-            myRoomId = null;
-            if (pollingInterval) clearInterval(pollingInterval);
-            // Очищаем постер при выходе, чтобы в следующий раз загрузился новый
-            document.getElementById('poster').classList.remove('loaded');
-            document.getElementById('poster').src = "";
-            switchTab('home', document.querySelectorAll('.nav-item')[0]);
-        }
+    if (!confirm("Выйти?")) return;
+
+    isSessionActive = false; // Сбрасываем флаг сессии
+
+    if (myRoomId) {
+        const uid = tg.initDataUnsafe.user?.id;
+        try {
+            await fetch(`${API_BASE}/leave_room`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: uid, room_id: myRoomId })
+            });
+        } catch(e){}
+    }
+
+    myRoomId = null;
+    if (pollingInterval) clearInterval(pollingInterval);
+
+    // Очищаем постер, чтобы при следующем входе не мигал старый фильм
+    const poster = document.getElementById('poster');
+    if (poster) {
+        poster.classList.remove('loaded');
+        poster.src = "";
+    }
+
+    // ВАЖНО: Вместо switchTab используем handleSearchTab
+    // Это гарантирует, что приложение вернется в меню выбора режима/жанра
+    handleSearchTab();
+}
 
         async function createRoomImpl() {
             const uid = tg.initDataUnsafe.user?.id;
