@@ -489,6 +489,34 @@
             {id: '6', name: '🚀 Фантастика'}, {id: '10', name: '🤠 Вестерн'}
         ];
 
+
+
+function showMatchNotification(movieTitle) {
+    // Если мы уже показали этот мэтч (предотвращаем дубли от разных функций)
+    if (movieTitle === lastMatchMovie) return;
+    lastMatchMovie = movieTitle;
+
+    // Вибрация
+    tg.HapticFeedback.notificationOccurred('success');
+
+    // Конфетти
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            zIndex: 9999
+        });
+    }
+
+    // Окно Telegram
+    tg.showPopup({
+        title: '🎉 У ВАС МЭТЧ!',
+        message: `Вы оба хотите посмотреть "${movieTitle}"`,
+        buttons: [{type: 'ok', text: 'Ура!'}]
+    });
+}
+
         async function checkAdmin() {
             const uid = tg.initDataUnsafe.user?.id;
             if(!uid) return;
@@ -756,35 +784,13 @@ async function checkRoomStatus() {
         const mData = await mRes.json();
 
         if (mData.status === 'match') {
-            triggerMatchEffect(mData.movie);
-        }
+    showMatchNotification(mData.movie);
+}
     } catch (e) {
         console.error("Polling error:", e);
     }
 }
 
-        function triggerMatchEffect(movieTitle) {
-    // 1. Проверка: не показывали ли мы этот мэтч секунду назад?
-    if (movieTitle === lastMatchMovie) return;
-    lastMatchMovie = movieTitle;
-
-    // 2. Визуальные эффекты
-    if (typeof confetti === 'function') {
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-    }
-
-    // 3. Системные уведомления
-    tg.HapticFeedback.notificationOccurred('success');
-    tg.showPopup({
-        title: '🎉 У ВАС МЭТЧ!',
-        message: `Вы оба выбрали: "${movieTitle}"`,
-        buttons: [{type: 'ok', text: 'Ура!'}]
-    });
-}
 
         function promptJoinRoom() { const code = prompt("Введите код:"); if (code) joinRoom(code); }
         async function joinRoom(code) {
@@ -900,8 +906,8 @@ async function checkRoomStatus() {
 
         // Если сервер сразу вернул мэтч — вызываем единую функцию
         if (data.status === 'match') {
-            triggerMatchEffect(title);
-        }
+    showMatchNotification(title);
+}
 
         isLoading = false;
         loadMovie(); // Грузим следующий фильм
