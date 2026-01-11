@@ -370,18 +370,14 @@
     </div>
 
     <div id="waiting" class="screen">
-    <div style="text-align: center; padding-top: 50px;">
+    <div style="text-align: center; padding: 40px 20px;">
         <div class="loader" style="margin: 0 auto 20px;"></div>
         <h2 style="color: var(--accent);">Код комнаты</h2>
-        <div style="background: var(--surface); padding: 20px; border-radius: 20px; margin: 20px; border: 1px dashed var(--accent);">
-            <h1 id="room-code-display" style="font-size: 3em; letter-spacing: 5px; margin: 0; color: #fff;">----</h1>
+        <div style="background: var(--surface); padding: 20px; border-radius: 20px; margin: 20px 0; border: 1px dashed var(--accent);">
+            <h1 id="room-code-display" style="font-size: 3.5em; letter-spacing: 8px; margin: 0; color: #fff;">----</h1>
         </div>
-        <p style="color: var(--text-dim); padding: 0 30px;">
-            Отправьте этот код другу. Как только он введет его, подбор начнется автоматически.
-        </p>
-        <button onclick="location.reload()" style="margin-top: 40px; background: none; border: 1px solid var(--danger); color: var(--danger); padding: 12px 25px; border-radius: 12px;">
-            Отменить
-        </button>
+        <p style="color: var(--text-dim);">Отправьте этот код партнеру.<br>Подбор начнется автоматически.</p>
+        <button onclick="location.reload()" style="margin-top: 40px; background: rgba(255,75,75,0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px 25px; border-radius: 12px; width: 100%;">Отмена</button>
     </div>
 </div>
 
@@ -690,48 +686,26 @@
 
         async function createRoomImpl() {
     const uid = tg.initDataUnsafe.user?.id;
-    const name = tg.initDataUnsafe.user?.first_name || "Игрок 1";
-
     try {
-        // 1. Показываем экран ожидания ПЕРЕД запросом, чтобы не было "пустоты"
-        switchTab('waiting', document.querySelector('.nav-item'));
-
         const res = await fetch(`${API_BASE}/create_room`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'ngrok-skip-browser-warning': 'true'
-            },
-            body: JSON.stringify({
-                user_id: uid,
-                user_name: name,
-                genre: currentGenre
-            })
+            headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+            body: JSON.stringify({ user_id: uid, user_name: tg.initDataUnsafe.user?.first_name, genre: currentGenre })
         });
-
         const data = await res.json();
 
         if (data && data.room_id) {
             myRoomId = data.room_id;
+            document.getElementById('room-code-display').innerText = myRoomId;
 
-            // 2. Отображаем код на экране
-            const codeElem = document.getElementById('room-code-display');
-            if (codeElem) codeElem.innerText = myRoomId;
+            // Переключаем экран. ВАЖНО: передаем любую кнопку из меню, чтобы switchTab сработал
+            const anyNavItem = document.querySelector('.nav-item');
+            switchTab('waiting', anyNavItem);
 
-            // 3. Запускаем опрос сервера
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(checkRoomStatus, 3000);
-
-            tg.HapticFeedback.impactOccurred('medium');
-        } else {
-            tg.showAlert("Сервер не прислал код комнаты");
-            switchTab('home', document.querySelector('.nav-item'));
         }
-    } catch (e) {
-        console.error("Create Room Error:", e);
-        tg.showAlert("Ошибка при создании комнаты");
-        switchTab('home', document.querySelector('.nav-item'));
-    }
+    } catch (e) { tg.showAlert("Ошибка связи"); }
 }
 
 async function checkRoomStatus() {
@@ -739,67 +713,45 @@ async function checkRoomStatus() {
     const uid = tg.initDataUnsafe.user?.id;
 
     try {
-        // 1. Проверяем статус комнаты (вход партнера)
         const res = await fetch(`${API_BASE}/check_room/${myRoomId}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const data = await res.json();
 
         if (data.status === 'joined') {
-            // Если партнер зашел, а мы все еще на экране ожидания — переходим в поиск
-            if (currentTab === 'waiting' || !isSessionActive) {
-                isSessionActive = true;
+            // Если партнер зашел
+            isSessionActive = true;
 
-                // Обновляем имя партнера в плашке (если элемент есть)
-                const partnerBadge = document.getElementById('partner-name');
-                if (partnerBadge) {
-                    partnerBadge.innerText = data.partner_name;
-                    if (partnerBadge.parentElement) partnerBadge.parentElement.style.display = 'flex';
-                }
+            // 1. Прячем экран ожидания вручную, если switchTab тупит
+            document.getElementById('waiting').style.display = 'none';
 
-                // Переключаем вкладку на поиск
-                const navSearch = document.querySelector('.nav-item'); // Первая кнопка в меню
-                switchTab('search', navSearch);
+            // 2. Переходим в поиск (имитируем нажатие первой кнопки меню)
+            const searchNavItem = document.querySelector('.nav-item');
+            switchTab('search', searchNavItem);
 
-                // Загружаем первый фильм для обоих
-                loadMovie();
+            // 3. Грузим фильм
+            loadMovie();
+
+            // 4. Обновляем имя партнера
+            const pb = document.getElementById('partner-name');
+            if (pb) {
+                pb.innerText = data.partner_name;
+                pb.closest('.partner-badge').style.display = 'flex';
             }
-        } else if (data.status === 'waiting' && isSessionActive) {
-            // Если мы уже играли, но партнер вышел
-            tg.showAlert("Партнер покинул комнату.");
-            myRoomId = null;
-            isSessionActive = false;
-            if (pollingInterval) clearInterval(pollingInterval);
-            switchTab('home', document.querySelector('.nav-item'));
-            return;
         }
 
-        // 2. Проверка мэтчей
-        const matchRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
+        // --- Блок проверки мэтчей ---
+        const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
-        const matchData = await matchRes.json();
-
-        if (matchData.status === 'match' && matchData.movie !== lastMatchMovie) {
-            lastMatchMovie = matchData.movie;
-
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
-            tg.showPopup({
-                title: '🎉 У ВАС МЭТЧ!',
-                message: `Вы оба хотите посмотреть "${matchData.movie}"`,
-                buttons: [{type: 'ok', text: 'Ура!'}]
-            });
-
+        const mData = await mRes.json();
+        if (mData.status === 'match' && mData.movie !== lastMatchMovie) {
+            lastMatchMovie = mData.movie;
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            tg.showPopup({ title: '🎉 МЭТЧ!', message: `Вы оба выбрали: ${mData.movie}`, buttons: [{type: 'ok'}] });
             tg.HapticFeedback.notificationOccurred('success');
         }
-    } catch (e) {
-        console.error("Polling error:", e);
-    }
+    } catch (e) { console.error("Ошибка опроса:", e); }
 }
 
         function promptJoinRoom() { const code = prompt("Введите код:"); if (code) joinRoom(code); }
