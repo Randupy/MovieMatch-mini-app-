@@ -690,33 +690,29 @@
             })
         });
 
-        if (!res.ok) {
-            throw new Error(`Ошибка сервера: ${res.status}`);
-        }
-
         const data = await res.json();
 
         if (data && data.room_id) {
             myRoomId = data.room_id;
-            
-            // Отображаем код на экране ожидания
-            document.getElementById('room-code-display').innerText = myRoomId;
-            
-            // ПЕРЕКЛЮЧАЕМ на экран ожидания (waiting) ПЕРЕД запуском интервала
-            switchTab('waiting', document.querySelectorAll('.nav-item')[0]);
 
-            // Сбрасываем старый интервал перед запуском нового
+            // Записываем код в элемент (убедись, что такой ID есть в HTML)
+            const codeElem = document.getElementById('room-code-display');
+            if (codeElem) codeElem.innerText = myRoomId;
+
+            // Переключаемся на экран ожидания
+            switchTab('waiting', document.querySelector('.nav-item'));
+
+            // Запускаем опрос сервера
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(checkRoomStatus, 3000);
-            
-            // Опционально: показываем код через интерфейс TG
-            tg.showConfirm(`Код комнаты: ${data.room_id}`, (ok) => {});
+
+            tg.HapticFeedback.impactOccurred('medium');
         } else {
-            tg.showAlert("Сервер вернул пустой код комнаты");
+            tg.showAlert("Сервер не прислал код комнаты");
         }
     } catch (e) {
-        console.error(e);
-        tg.showAlert("Ошибка при создании комнаты");
+        console.error("Create Room Error:", e);
+        tg.showAlert("Ошибка соединения с сервером");
     }
 }
 
@@ -725,70 +721,53 @@ async function checkRoomStatus() {
     const uid = tg.initDataUnsafe.user?.id;
 
     try {
-        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ
+        // 1. Проверка входа партнера
         const res = await fetch(`${API_BASE}/check_room/${myRoomId}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const data = await res.json();
 
         if (data.status === 'joined') {
-            // Обновляем имя партнера в интерфейсе
             const partnerBadge = document.getElementById('partner-name');
             if (partnerBadge) {
                 partnerBadge.innerText = data.partner_name;
-                // Убеждаемся, что родительский контейнер бейджа виден
-                const badgeContainer = partnerBadge.closest('.partner-badge') || partnerBadge.parentElement;
-                if (badgeContainer) badgeContainer.style.display = 'flex';
+                // Показываем блок с именем партнера
+                if (partnerBadge.parentElement) partnerBadge.parentElement.style.display = 'flex';
             }
 
-            // Если создатель (хост) всё еще на экране ожидания кода или просто сессия не активна
+            // Если мы всё еще видим экран с кодом — «проваливаемся» в игру
             if (currentTab === 'waiting' || !isSessionActive) {
                 isSessionActive = true;
-                
-                // Сначала переключаем вкладку
-                switchTab('search', document.querySelectorAll('.nav-item')[0]);
-                
-                // Сразу загружаем первый фильм (синхронизация)
+                switchTab('search', document.querySelector('.nav-item'));
                 loadMovie();
             }
         } else if (data.status === 'waiting' && isSessionActive) {
-            // Если партнер вышел
             tg.showAlert("Партнер покинул комнату.");
             myRoomId = null;
             isSessionActive = false;
-            lastMatchMovie = ""; 
-
             if (pollingInterval) clearInterval(pollingInterval);
-
-            switchTab('home', document.querySelectorAll('.nav-item')[0]);
+            switchTab('home', document.querySelector('.nav-item'));
             return;
         }
 
-        // 2. ПРОВЕРКА МЭТЧЕЙ
+        // 2. Проверка мэтчей
         const matchRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
-        const matchData = await matchRes.json();
+        const m = await matchRes.json();
 
-        if (matchData.status === 'match' && matchData.movie !== lastMatchMovie) {
-            lastMatchMovie = matchData.movie;
-
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
+        if (m.status === 'match' && m.movie !== lastMatchMovie) {
+            lastMatchMovie = m.movie;
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             tg.showPopup({
-                title: '🎉 У ВАС МЭТЧ!',
-                message: `Вы оба хотите посмотреть "${matchData.movie}"`,
-                buttons: [{type: 'ok', text: 'Ура!'}]
+                title: '🎉 МЭТЧ!',
+                message: `Вы оба хотите посмотреть "${m.movie}"`,
+                buttons: [{type: 'ok'}]
             });
-
             tg.HapticFeedback.notificationOccurred('success');
         }
     } catch (e) {
-        console.error("Ошибка в checkRoomStatus:", e);
+        console.error("Polling Error:", e);
     }
 }
 
