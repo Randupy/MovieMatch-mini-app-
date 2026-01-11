@@ -719,29 +719,23 @@ async function checkRoomStatus() {
     const uid = tg.initDataUnsafe.user?.id;
 
     try {
-        // 1. Проверка входа партнера
         const res = await fetch(`${API_BASE}/check_room/${myRoomId}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const data = await res.json();
 
         if (data.status === 'joined') {
-            // КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: выполняем переход только ОДИН раз
             if (!isSessionActive) {
                 isSessionActive = true;
 
-                // Прячем экран ожидания
+                // Скрываем экран ожидания
                 const waitingScreen = document.getElementById('waiting');
                 if (waitingScreen) waitingScreen.style.display = 'none';
 
-                // Переходим в поиск
-                const searchNavItem = document.querySelector('.nav-item');
-                switchTab('search', searchNavItem);
-
-                // Загружаем фильм ТОЛЬКО при первом входе
+                // Переходим в поиск и грузим фильм ОДИН РАЗ
+                switchTab('search', document.querySelector('.nav-item'));
                 loadMovie();
 
-                // Обновляем имя партнера
                 const pb = document.getElementById('partner-name');
                 if (pb) {
                     pb.innerText = data.partner_name;
@@ -750,39 +744,46 @@ async function checkRoomStatus() {
                 }
             }
         } else if (data.status === 'waiting' && isSessionActive) {
-            // Если были в игре, но статус сменился на waiting (партнер вышел)
             tg.showAlert("Партнер покинул комнату.");
-            myRoomId = null;
-            isSessionActive = false;
-            lastMatchMovie = ""; 
-            if (pollingInterval) clearInterval(pollingInterval);
-            switchTab('home', document.querySelector('.nav-item'));
+            exitRoom(); // Используй свою функцию выхода, чтобы очистить всё
             return;
         }
 
-        // 2. Блок проверки мэтчей (выполняется всегда, пока есть myRoomId)
+        // ПРОВЕРКА МЭТЧЕЙ через единую функцию
         const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const mData = await mRes.json();
-        
-        if (mData.status === 'match' && mData.movie !== lastMatchMovie) {
-            lastMatchMovie = mData.movie;
-            
-            if (typeof confetti === 'function') {
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            }
-            
-            tg.showPopup({ 
-                title: '🎉 У ВАС МЭТЧ!', 
-                message: `Вы оба выбрали: ${mData.movie}`, 
-                buttons: [{type: 'ok'}] 
-            });
-            tg.HapticFeedback.notificationOccurred('success');
+
+        if (mData.status === 'match') {
+            triggerMatchEffect(mData.movie);
         }
-    } catch (e) { 
-        console.error("Ошибка опроса:", e); 
+    } catch (e) {
+        console.error("Polling error:", e);
     }
+}
+
+        function triggerMatchEffect(movieTitle) {
+    // 1. Проверка: не показывали ли мы этот мэтч секунду назад?
+    if (movieTitle === lastMatchMovie) return;
+    lastMatchMovie = movieTitle;
+
+    // 2. Визуальные эффекты
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+
+    // 3. Системные уведомления
+    tg.HapticFeedback.notificationOccurred('success');
+    tg.showPopup({
+        title: '🎉 У ВАС МЭТЧ!',
+        message: `Вы оба выбрали: "${movieTitle}"`,
+        buttons: [{type: 'ok', text: 'Ура!'}]
+    });
 }
 
         function promptJoinRoom() { const code = prompt("Введите код:"); if (code) joinRoom(code); }
@@ -897,28 +898,13 @@ async function checkRoomStatus() {
 
         const data = await res.json();
 
-        // ЛОГИКА МЭТЧА
+        // Если сервер сразу вернул мэтч — вызываем единую функцию
         if (data.status === 'match') {
-            // Вибрация
-            tg.HapticFeedback.notificationOccurred('success');
-
-            // Конфетти
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
-            // Всплывающее окно Telegram
-            tg.showPopup({
-                title: '🎉 У вас мэтч!',
-                message: `Вы оба хотите посмотреть "${title}"`,
-                buttons: [{type: 'ok', text: 'Круто!'}]
-            });
+            triggerMatchEffect(title);
         }
 
         isLoading = false;
-        loadMovie();
+        loadMovie(); // Грузим следующий фильм
     } catch(e) {
         console.error(e);
         isLoading = false;
