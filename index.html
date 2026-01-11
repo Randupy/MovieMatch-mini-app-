@@ -681,7 +681,6 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // Пропускаем страницу-предупреждение ngrok
                 'ngrok-skip-browser-warning': 'true'
             },
             body: JSON.stringify({
@@ -699,11 +698,19 @@
 
         if (data && data.room_id) {
             myRoomId = data.room_id;
-            tg.showConfirm(`Код: ${data.room_id}`, (ok) => {});
+            
+            // Отображаем код на экране ожидания
+            document.getElementById('room-code-display').innerText = myRoomId;
+            
+            // ПЕРЕКЛЮЧАЕМ на экран ожидания (waiting) ПЕРЕД запуском интервала
+            switchTab('waiting', document.querySelectorAll('.nav-item')[0]);
 
             // Сбрасываем старый интервал перед запуском нового
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(checkRoomStatus, 3000);
+            
+            // Опционально: показываем код через интерфейс TG
+            tg.showConfirm(`Код комнаты: ${data.room_id}`, (ok) => {});
         } else {
             tg.showAlert("Сервер вернул пустой код комнаты");
         }
@@ -713,12 +720,12 @@
     }
 }
 
-       async function checkRoomStatus() {
+async function checkRoomStatus() {
     if (!myRoomId) return;
     const uid = tg.initDataUnsafe.user?.id;
 
     try {
-        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ (добавлен ?t= для обхода кэша)
+        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ
         const res = await fetch(`${API_BASE}/check_room/${myRoomId}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
@@ -729,33 +736,35 @@
             const partnerBadge = document.getElementById('partner-name');
             if (partnerBadge) {
                 partnerBadge.innerText = data.partner_name;
-                partnerBadge.parentElement.style.display = 'block';
+                // Убеждаемся, что родительский контейнер бейджа виден
+                const badgeContainer = partnerBadge.closest('.partner-badge') || partnerBadge.parentElement;
+                if (badgeContainer) badgeContainer.style.display = 'flex';
             }
 
-            // Если создатель (хост) всё еще на экране ожидания кода
-            if (currentTab === 'waiting') {
+            // Если создатель (хост) всё еще на экране ожидания кода или просто сессия не активна
+            if (currentTab === 'waiting' || !isSessionActive) {
                 isSessionActive = true;
-                // Переключаем вкладку на поиск
+                
+                // Сначала переключаем вкладку
                 switchTab('search', document.querySelectorAll('.nav-item')[0]);
-                // Загружаем первый фильм
+                
+                // Сразу загружаем первый фильм (синхронизация)
                 loadMovie();
             }
         } else if (data.status === 'waiting' && isSessionActive) {
-            // Если партнер вышел, пока мы были в процессе подбора
+            // Если партнер вышел
             tg.showAlert("Партнер покинул комнату.");
             myRoomId = null;
             isSessionActive = false;
-            lastMatchMovie = ""; // Сбрасываем фильм, чтобы в новой комнате мэтчи работали
+            lastMatchMovie = ""; 
 
-            // Останавливаем интервал опроса
             if (pollingInterval) clearInterval(pollingInterval);
 
-            // Возвращаем на главную
             switchTab('home', document.querySelectorAll('.nav-item')[0]);
             return;
         }
 
-        // 2. ПРОВЕРКА МЭТЧЕЙ (добавлен ?t= для синхронности)
+        // 2. ПРОВЕРКА МЭТЧЕЙ
         const matchRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
