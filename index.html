@@ -718,41 +718,49 @@
     const uid = tg.initDataUnsafe.user?.id;
 
     try {
-        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ (вошел ли партнер или не вышел ли он)
+        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ
         const res = await fetch(`${API_BASE}/check_room/${myRoomId}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const data = await res.json();
 
         if (data.status === 'joined') {
+            // Обновляем имя партнера в интерфейсе
             const partnerBadge = document.getElementById('partner-name');
-            if (partnerBadge) partnerBadge.innerText = data.partner_name;
+            if (partnerBadge) {
+                partnerBadge.innerText = data.partner_name;
+                partnerBadge.parentElement.style.display = 'block'; // Показываем бейдж если был скрыт
+            }
 
-            // Если мы всё еще на экране ожидания — переключаем в поиск
+            // Если создатель (хост) всё еще на экране ожидания кода
             if (currentTab === 'waiting') {
                 isSessionActive = true;
+                // Переключаем вкладку на поиск
                 switchTab('search', document.querySelectorAll('.nav-item')[0]);
+                // Загружаем первый фильм
                 loadMovie();
             }
         } else if (data.status === 'waiting' && isSessionActive) {
-            // Если мы были в поиске, а статус стал 'waiting' — значит партнер вышел
+            // Если партнер вышел, пока мы были в процессе подбора
             tg.showAlert("Партнер покинул комнату.");
             myRoomId = null;
             isSessionActive = false;
+            // Останавливаем интервал опроса
+            if (pollingInterval) clearInterval(pollingInterval);
+            // Возвращаем на главную
             switchTab('home', document.querySelectorAll('.nav-item')[0]);
+            return; // Прекращаем выполнение функции
         }
 
-        // 2. ПРОВЕРКА МЭТЧЕЙ (для обоих пользователей)
-        // Этот запрос вернет данные, если за последние 10 секунд случился мэтч
+        // 2. ПРОВЕРКА МЭТЧЕЙ (работает параллельно для обоих)
         const matchRes = await fetch(`${API_BASE}/check_matches/${uid}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const matchData = await matchRes.json();
 
         if (matchData.status === 'match' && matchData.movie !== lastMatchMovie) {
-            lastMatchMovie = matchData.movie; // Запоминаем, чтобы не дублировать
+            lastMatchMovie = matchData.movie;
 
-            // Запускаем праздник!
             confetti({
                 particleCount: 150,
                 spread: 70,
