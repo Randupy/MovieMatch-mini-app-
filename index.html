@@ -370,13 +370,16 @@
     </div>
 
     <div id="waiting" class="screen">
-    <div style="text-align: center; margin-top: 50px;">
+    <div style="text-align: center; padding-top: 50px;">
         <div class="loader" style="margin: 0 auto 20px;"></div>
-        <h2 style="color: var(--accent);">Код комнаты:</h2>
-        <h1 id="room-code-display" style="font-size: 3em; letter-spacing: 5px; margin: 10px 0;">----</h1>
-        <p style="color: var(--text-dim);">Отправьте этот код другу.<br>Когда он введет его, подбор начнется автоматически.</p>
-
-        <button onclick="exitRoom()" style="margin-top: 30px; background: rgba(255,75,75,0.2); color: var(--danger); border: 1px solid var(--danger); padding: 10px 20px; border-radius: 12px;">
+        <h2 style="color: var(--accent);">Код комнаты</h2>
+        <div style="background: var(--surface); padding: 20px; border-radius: 20px; margin: 20px; border: 1px dashed var(--accent);">
+            <h1 id="room-code-display" style="font-size: 3em; letter-spacing: 5px; margin: 0; color: #fff;">----</h1>
+        </div>
+        <p style="color: var(--text-dim); padding: 0 30px;">
+            Отправьте этот код другу. Как только он введет его, подбор начнется автоматически.
+        </p>
+        <button onclick="location.reload()" style="margin-top: 40px; background: none; border: 1px solid var(--danger); color: var(--danger); padding: 12px 25px; border-radius: 12px;">
             Отменить
         </button>
     </div>
@@ -736,63 +739,66 @@ async function checkRoomStatus() {
     const uid = tg.initDataUnsafe.user?.id;
 
     try {
-        // 1. Проверка входа партнера (добавлен ?t= для обхода кэша)
+        // 1. Проверяем статус комнаты (вход партнера)
         const res = await fetch(`${API_BASE}/check_room/${myRoomId}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const data = await res.json();
 
         if (data.status === 'joined') {
-            const partnerBadge = document.getElementById('partner-name');
-            if (partnerBadge) {
-                partnerBadge.innerText = data.partner_name;
-                // В твоем HTML это родительский .partner-badge
-                const container = partnerBadge.closest('.partner-badge');
-                if (container) container.style.display = 'flex';
-            }
-
-            // Если мы на экране ожидания — принудительно заходим в игру
+            // Если партнер зашел, а мы все еще на экране ожидания — переходим в поиск
             if (currentTab === 'waiting' || !isSessionActive) {
                 isSessionActive = true;
-                // Находим первую кнопку в меню (Поиск) для функции switchTab
-                const searchBtn = document.querySelector('.nav-item');
-                switchTab('search', searchBtn);
+
+                // Обновляем имя партнера в плашке (если элемент есть)
+                const partnerBadge = document.getElementById('partner-name');
+                if (partnerBadge) {
+                    partnerBadge.innerText = data.partner_name;
+                    if (partnerBadge.parentElement) partnerBadge.parentElement.style.display = 'flex';
+                }
+
+                // Переключаем вкладку на поиск
+                const navSearch = document.querySelector('.nav-item'); // Первая кнопка в меню
+                switchTab('search', navSearch);
+
+                // Загружаем первый фильм для обоих
                 loadMovie();
             }
         } else if (data.status === 'waiting' && isSessionActive) {
-            // Если мы уже играли, но партнер пропал
+            // Если мы уже играли, но партнер вышел
             tg.showAlert("Партнер покинул комнату.");
             myRoomId = null;
             isSessionActive = false;
-            lastMatchMovie = ""; 
             if (pollingInterval) clearInterval(pollingInterval);
             switchTab('home', document.querySelector('.nav-item'));
             return;
         }
 
-        // 2. Проверка мэтчей (с кэш-бастером)
+        // 2. Проверка мэтчей
         const matchRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
-        const m = await matchRes.json();
+        const matchData = await matchRes.json();
 
-        if (m.status === 'match' && m.movie !== lastMatchMovie) {
-            lastMatchMovie = m.movie;
-            
-            // Запуск анимации
-            if (typeof confetti === 'function') {
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            }
-            
+        if (matchData.status === 'match' && matchData.movie !== lastMatchMovie) {
+            lastMatchMovie = matchData.movie;
+
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
             tg.showPopup({
                 title: '🎉 У ВАС МЭТЧ!',
-                message: `Вы оба хотите посмотреть "${m.movie}"`,
-                buttons: [{type: 'ok', text: 'Круто!'}]
+                message: `Вы оба хотите посмотреть "${matchData.movie}"`,
+                buttons: [{type: 'ok', text: 'Ура!'}]
             });
+
             tg.HapticFeedback.notificationOccurred('success');
         }
     } catch (e) {
-        console.error("Ошибка в checkRoomStatus:", e);
+        console.error("Polling error:", e);
     }
 }
 
