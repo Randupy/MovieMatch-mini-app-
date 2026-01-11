@@ -706,7 +706,7 @@
 
             // Переключаем экран. ВАЖНО: передаем любую кнопку из меню, чтобы switchTab сработал
             const anyNavItem = document.querySelector('.nav-item');
-            switchTab('waiting', anyNavItem);
+            switchTab('waiting', null);
 
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(checkRoomStatus, 3000);
