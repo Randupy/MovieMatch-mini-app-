@@ -713,13 +713,13 @@
     }
 }
 
-        async function checkRoomStatus() {
+       async function checkRoomStatus() {
     if (!myRoomId) return;
     const uid = tg.initDataUnsafe.user?.id;
 
     try {
-        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ
-        const res = await fetch(`${API_BASE}/check_room/${myRoomId}`, {
+        // 1. ПРОВЕРКА СТАТУСА КОМНАТЫ (добавлен ?t= для обхода кэша)
+        const res = await fetch(`${API_BASE}/check_room/${myRoomId}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const data = await res.json();
@@ -729,7 +729,7 @@
             const partnerBadge = document.getElementById('partner-name');
             if (partnerBadge) {
                 partnerBadge.innerText = data.partner_name;
-                partnerBadge.parentElement.style.display = 'block'; // Показываем бейдж если был скрыт
+                partnerBadge.parentElement.style.display = 'block';
             }
 
             // Если создатель (хост) всё еще на экране ожидания кода
@@ -745,15 +745,18 @@
             tg.showAlert("Партнер покинул комнату.");
             myRoomId = null;
             isSessionActive = false;
+            lastMatchMovie = ""; // Сбрасываем фильм, чтобы в новой комнате мэтчи работали
+
             // Останавливаем интервал опроса
             if (pollingInterval) clearInterval(pollingInterval);
+
             // Возвращаем на главную
             switchTab('home', document.querySelectorAll('.nav-item')[0]);
-            return; // Прекращаем выполнение функции
+            return;
         }
 
-        // 2. ПРОВЕРКА МЭТЧЕЙ (работает параллельно для обоих)
-        const matchRes = await fetch(`${API_BASE}/check_matches/${uid}`, {
+        // 2. ПРОВЕРКА МЭТЧЕЙ (добавлен ?t= для синхронности)
+        const matchRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const matchData = await matchRes.json();
