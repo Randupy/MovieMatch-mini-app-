@@ -508,7 +508,7 @@
         renderGenres();
 
         function switchTab(screen, el) {
-    // 1. Скрываем все экраны через display, чтобы избежать конфликтов со стилями
+    // 1. Скрываем вообще все элементы с классом screen
     document.querySelectorAll('.screen').forEach(s => {
         s.style.display = 'none';
         s.classList.remove('active');
@@ -517,25 +517,31 @@
     // 2. Снимаем активный класс с кнопок навигации
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
-    // 3. Пытаемся найти экран (проверяем оба варианта ID: 'screen-name' и 'name-screen')
-    let targetScreen = document.getElementById('screen-' + screen) || document.getElementById(screen + '-screen');
+    // 3. Улучшенный поиск экрана: ищем по ID 'waiting', 'screen-waiting' или 'waiting-screen'
+    let targetScreen = document.getElementById(screen) ||
+                       document.getElementById('screen-' + screen) ||
+                       document.getElementById(screen + '-screen');
 
     if (targetScreen) {
         targetScreen.style.display = 'block';
-        targetScreen.classList.add('active');
+        // Небольшая задержка для плавности анимации active
+        setTimeout(() => targetScreen.classList.add('active'), 10);
+        currentTab = screen; // Обновляем глобальную переменную текущей вкладки
+    } else {
+        console.error("Экран не найден: " + screen);
     }
 
-    // 4. Подсвечиваем кнопку в меню
+    // 4. Подсвечиваем кнопку в меню, если она передана
     if (el) el.classList.add('active');
 
-    // 5. Загружаем данные в зависимости от вкладки
+    // 5. Загружаем данные
     if(screen === 'profile') loadMyLikes();
     if(screen === 'admin') loadAdminData();
     if(screen === 'support') loadMyTickets();
 
     // 6. Виброотклик
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('medium');
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+        Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
 }
 
