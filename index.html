@@ -491,6 +491,8 @@
 
 
 
+let lastMatchMovie = ""; // Убедись, что эта переменная объявлена в самом верху скрипта
+
 function showMatchNotification(movieTitle) {
     // Если мы уже показали этот мэтч (предотвращаем дубли от разных функций)
     if (movieTitle === lastMatchMovie) return;
@@ -505,7 +507,7 @@ function showMatchNotification(movieTitle) {
             particleCount: 150,
             spread: 70,
             origin: { y: 0.6 },
-            zIndex: 9999
+            zIndex: 10002 // Повышенный приоритет отрисовки
         });
     }
 
@@ -515,6 +517,11 @@ function showMatchNotification(movieTitle) {
         message: `Вы оба хотите посмотреть "${movieTitle}"`,
         buttons: [{type: 'ok', text: 'Ура!'}]
     });
+
+    // Сброс флага через 10 секунд, чтобы можно было поймать новый мэтч
+    setTimeout(() => {
+        if (lastMatchMovie === movieTitle) lastMatchMovie = "";
+    }, 10000);
 }
 
         async function checkAdmin() {
@@ -753,6 +760,14 @@ async function checkRoomStatus() {
         const data = await res.json();
 
         if (data.status === 'joined') {
+            // ОБНОВЛЯЕМ ИМЯ ПАРТНЕРА ВСЕГДА (решает проблему №1)
+            const pb = document.getElementById('partner-name');
+            if (pb && data.partner_name) {
+                pb.innerText = data.partner_name;
+                const badge = pb.closest('.partner-badge') || pb.parentElement;
+                if (badge) badge.style.display = 'flex';
+            }
+
             if (!isSessionActive) {
                 isSessionActive = true;
 
@@ -763,29 +778,22 @@ async function checkRoomStatus() {
                 // Переходим в поиск и грузим фильм ОДИН РАЗ
                 switchTab('search', document.querySelector('.nav-item'));
                 loadMovie();
-
-                const pb = document.getElementById('partner-name');
-                if (pb) {
-                    pb.innerText = data.partner_name;
-                    const badge = pb.closest('.partner-badge');
-                    if (badge) badge.style.display = 'flex';
-                }
             }
         } else if (data.status === 'waiting' && isSessionActive) {
             tg.showAlert("Партнер покинул комнату.");
-            exitRoom(); // Используй свою функцию выхода, чтобы очистить всё
+            exitRoom();
             return;
         }
 
-        // ПРОВЕРКА МЭТЧЕЙ через единую функцию
+        // ПРОВЕРКА МЭТЧЕЙ (решает проблему №2 через принудительный сброс кэша)
         const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
         const mData = await mRes.json();
 
         if (mData.status === 'match') {
-    showMatchNotification(mData.movie);
-}
+            showMatchNotification(mData.movie);
+        }
     } catch (e) {
         console.error("Polling error:", e);
     }
