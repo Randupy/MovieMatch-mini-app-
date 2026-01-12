@@ -768,10 +768,14 @@ async function checkRoomStatus() {
         const data = await res.json();
 
         if (data.status === 'joined') {
-            // ОБНОВЛЯЕМ ИМЯ ПАРТНЕРА ВСЕГДА (решает проблему №1)
+            // ОПРЕДЕЛЯЕМ ИМЯ ПАРТНЕРА (решает проблему отображения у создателя)
+            // Если мой ID совпадает с ID создателя (user1_id), значит мой партнер - Гость (user2_name)
+            // В противном случае мой партнер - Создатель (user1_name)
+            let partnerName = (uid === data.user1_id) ? data.user2_name : data.user1_name;
+
             const pb = document.getElementById('partner-name');
-            if (pb && data.partner_name) {
-                pb.innerText = data.partner_name;
+            if (pb && partnerName) {
+                pb.innerText = partnerName;
                 const badge = pb.closest('.partner-badge') || pb.parentElement;
                 if (badge) badge.style.display = 'flex';
             }
@@ -793,7 +797,7 @@ async function checkRoomStatus() {
             return;
         }
 
-        // ПРОВЕРКА МЭТЧЕЙ (решает проблему №2 через принудительный сброс кэша)
+        // ПРОВЕРКА МЭТЧЕЙ
         const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
             headers: {'ngrok-skip-browser-warning': 'true'}
         });
