@@ -785,8 +785,8 @@ async function checkRoomStatus() {
                 loadMovie();
             }
         }
-        // ИСПРАВЛЕНИЕ ТУТ: Если партнер вышел (статус сменился на waiting, хотя игра уже шла)
-        else if (data.status === 'waiting' && isSessionActive) {
+        // ИСПРАВЛЕНИЕ: Добавлена проверка на 'not_found' (когда создатель удалил комнату)
+        else if ((data.status === 'waiting' || data.status === 'not_found') && isSessionActive) {
             // 1. Сбрасываем флаги немедленно
             isSessionActive = false;
 
@@ -797,11 +797,10 @@ async function checkRoomStatus() {
             }
 
             // 3. Уведомляем пользователя
-            tg.showAlert("Партнер покинул комнату.");
+            tg.showAlert("Партнер покинул комнату или она была закрыта.");
 
             // 4. ПЕРЕНАПРАВЛЯЕМ НА ГЛАВНЫЙ ЭКРАН
-            // Переключаемся на вкладку 'home' и передаем элемент меню (опционально)
-            switchTab('home', document.querySelector('.nav-item[onclick*="home"]'));
+            switchTab('home', document.querySelector('.nav-item'));
 
             // 5. Полная зачистка данных комнаты
             myRoomId = null;
@@ -809,6 +808,21 @@ async function checkRoomStatus() {
 
             return;
         }
+
+        // Проверка мэтчей (выполняется только если сессия еще активна)
+        if (isSessionActive) {
+            const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
+                headers: {'ngrok-skip-browser-warning': 'true'}
+            });
+            const mData = await mRes.json();
+            if (mData.status === 'match') {
+                showMatchNotification(mData.movie);
+            }
+        }
+    } catch (e) {
+        console.error("Polling error:", e);
+    }
+}
 
         // Проверка мэтчей (только если сессия еще активна)
         if (isSessionActive) {
