@@ -784,7 +784,7 @@ async function checkRoomStatus() {
                 switchTab('search', document.querySelector('.nav-item'));
                 loadMovie();
             }
-        }
+        } 
         // ИСПРАВЛЕНИЕ: Добавлена проверка на 'not_found' (когда создатель удалил комнату)
         else if ((data.status === 'waiting' || data.status === 'not_found') && isSessionActive) {
             // 1. Сбрасываем флаги немедленно
@@ -810,21 +810,6 @@ async function checkRoomStatus() {
         }
 
         // Проверка мэтчей (выполняется только если сессия еще активна)
-        if (isSessionActive) {
-            const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
-                headers: {'ngrok-skip-browser-warning': 'true'}
-            });
-            const mData = await mRes.json();
-            if (mData.status === 'match') {
-                showMatchNotification(mData.movie);
-            }
-        }
-    } catch (e) {
-        console.error("Polling error:", e);
-    }
-}
-
-        // Проверка мэтчей (только если сессия еще активна)
         if (isSessionActive) {
             const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
                 headers: {'ngrok-skip-browser-warning': 'true'}
