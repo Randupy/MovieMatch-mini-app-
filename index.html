@@ -768,11 +768,8 @@ async function checkRoomStatus() {
         const data = await res.json();
 
         if (data.status === 'joined') {
-            // ОПРЕДЕЛЯЕМ ИМЯ ПАРТНЕРА (решает проблему отображения у создателя)
-            // Если мой ID совпадает с ID создателя (user1_id), значит мой партнер - Гость (user2_name)
-            // В противном случае мой партнер - Создатель (user1_name)
+            // Логика отображения имени партнера
             let partnerName = (uid === data.user1_id) ? data.user2_name : data.user1_name;
-
             const pb = document.getElementById('partner-name');
             if (pb && partnerName) {
                 pb.innerText = partnerName;
@@ -782,29 +779,41 @@ async function checkRoomStatus() {
 
             if (!isSessionActive) {
                 isSessionActive = true;
-
-                // Скрываем экран ожидания
                 const waitingScreen = document.getElementById('waiting');
                 if (waitingScreen) waitingScreen.style.display = 'none';
-
-                // Переходим в поиск и грузим фильм ОДИН РАЗ
                 switchTab('search', document.querySelector('.nav-item'));
                 loadMovie();
             }
-        } else if (data.status === 'waiting' && isSessionActive) {
-            tg.showAlert("Партнер покинул комнату.");
-            exitRoom();
+        } 
+        // ИСПРАВЛЕНИЕ ТУТ: Если партнер вышел (статус сменился на waiting, хотя игра уже шла)
+        else if (data.status === 'waiting' && isSessionActive) {
+            // 1. Немедленно сбрасываем флаг, чтобы не зайти в это условие снова
+            isSessionActive = false;
+            
+            // 2. Останавливаем таймер опроса сервера
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+
+            // 3. Показываем уведомление ОДИН раз
+            tg.showAlert("Партнер покинул комнату. Вы будете перенаправлены на главный экран.");
+            
+            // 4. Очищаем ID комнаты и возвращаем пользователя домой
+            myRoomId = null;
+            exitRoom(); // Вызываем вашу функцию очистки
             return;
         }
 
-        // ПРОВЕРКА МЭТЧЕЙ
-        const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
-            headers: {'ngrok-skip-browser-warning': 'true'}
-        });
-        const mData = await mRes.json();
-
-        if (mData.status === 'match') {
-            showMatchNotification(mData.movie);
+        // Проверка мэтчей (только если сессия еще активна)
+        if (isSessionActive) {
+            const mRes = await fetch(`${API_BASE}/check_matches/${uid}?t=${Date.now()}`, {
+                headers: {'ngrok-skip-browser-warning': 'true'}
+            });
+            const mData = await mRes.json();
+            if (mData.status === 'match') {
+                showMatchNotification(mData.movie);
+            }
         }
     } catch (e) {
         console.error("Polling error:", e);
