@@ -189,60 +189,70 @@ app.add_middleware(
 async def get_movie(user_id: int, genre: str = None):
     headers = {"X-API-KEY": KP_API_KEY}
 
-    # 1. Получаем список уже просмотренных ID
     async with aiosqlite.connect(DB_NAME) as db:
+        # 1. Получаем данные комнаты и партнера
+        async with db.execute(
+                "SELECT user1_id, user2_id, genre FROM rooms WHERE user1_id = ? OR user2_id = ?",
+                (user_id, user_id)
+        ) as cursor:
+            room = await cursor.fetchone()
+
+        partner_id = None
+        if room:
+            partner_id = room[1] if room[0] == user_id else room[0]
+            if not genre or genre == "all":
+                genre = room[2]
+
+        # 2. Собираем список исключений (что вы уже видели)
         async with db.execute("SELECT movie_id FROM seen_movies WHERE user_id = ?", (user_id,)) as cursor:
-            seen_rows = await cursor.fetchall()
-            seen_ids = {row[0] for row in seen_rows}
+            my_seen = {row[0] for row in await cursor.fetchall()}
+
+        # 3. Находим лайки партнера, которые мы еще НЕ видели
+        partner_likes = []
+        if partner_id:
+            async with db.execute(
+                    "SELECT movie_id FROM likes WHERE user_id = ? AND movie_id NOT IN (SELECT movie_id FROM seen_movies WHERE user_id = ?)",
+                    (partner_id, user_id)
+            ) as cursor:
+                partner_likes = [row[0] for row in await cursor.fetchall()]
 
     try:
-        # Генерируем пул из 60 страниц (1200 фильмов).
-        # Перемешиваем, чтобы каждый раз искать в разных местах.
-        pages_to_try = list(range(1, 61))
-        random.shuffle(pages_to_try)
-
-        movie_id = None
-
-        # Пробуем проверить до 15 разных страниц из перемешанного списка
-        for page in pages_to_try[:15]:
+        # 4. Формируем запрос к API для получения "свежих" фильмов
+        if genre and genre != "all":
+            base_url = f"https://kinopoiskapiunofficial.tech/api/v2.2/films?genres={genre}&order=NUM_VOTE&type=FILM&ratingFrom=6"
+        else:
             base_url = "https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_ALL"
 
-            if genre and genre != "all":
-                # Сортировка по количеству голосов (NUM_VOTE) - самое релевантное
-                base_url = f"https://kinopoiskapiunofficial.tech/api/v2.2/films?genres={genre}&order=NUM_VOTE&type=FILM&ratingFrom=6&ratingTo=10&yearFrom=2000&yearTo=3000"
+        potential_movies = []
 
-            list_url = f"{base_url}&page={page}"
+        # Берем фильмы с первых 3-х страниц для разнообразия
+        for page in range(1, 4):
+            async with http_client.get(f"{base_url}&page={page}", headers=headers) as resp:
+                if resp.status != 200: continue
+                data = await resp.json()
+                items = data.get("items", []) or data.get("films", [])
+                for m in items:
+                    mid = m.get("kinopoiskId") or m.get("filmId")
+                    if mid and mid not in my_seen:
+                        potential_movies.append(mid)
+            if len(potential_movies) > 40: break
 
-            async with http_client.get(list_url, headers=headers) as resp:
-                # Если словили лимит запросов (429) или ошибку, ждем и пропускаем итерацию
-                if resp.status != 200:
-                    await asyncio.sleep(0.2)  # Небольшая пауза перед следующей попыткой
-                    continue
+        # 5. СМЕШИВАЕМ: Лайки партнера + Новые фильмы
+        # Чтобы не было предсказуемости, перемешиваем весь список
+        final_pool = list(set(partner_likes + potential_movies))
+        random.shuffle(final_pool)
 
-                items_data = await resp.json()
-                items = items_data.get("items", [])
+        if not final_pool:
+            return {"title": "Фильмы закончились", "description": "Попробуйте сменить жанр!"}
 
-                # Фильтруем: оставляем только те, которых нет в seen_ids
-                available_movies = [m for m in items if m.get("kinopoiskId") not in seen_ids]
-
-                if available_movies:
-                    movie_item = random.choice(available_movies)
-                    movie_id = movie_item.get("kinopoiskId")
-                    break  # Фильм найден, выходим из цикла
-
-            # ВАЖНО: Минимальная задержка между запросами в цикле,
-            # чтобы API не возвращал 429 ошибку, из-за которой бот думает, что фильмов нет.
-            await asyncio.sleep(0.15)
-
-        if not movie_id:
-            return {"title": "Фильмы закончились", "description": "Попробуйте сменить жанр или сбросить историю."}
-
-        # Получаем детали фильма
+        # 6. Берем первый ID из перемешанного пула и получаем детали
+        movie_id = final_pool[0]
         details_url = f"https://kinopoiskapiunofficial.tech/api/v2.2/films/{movie_id}"
+
         async with http_client.get(details_url, headers=headers) as resp:
             if resp.status == 200:
                 data = await resp.json()
-                genres = ", ".join([g['genre'] for g in data.get('genres', [])][:2]).capitalize()
+                g_list = [g['genre'] for g in data.get('genres', [])]
                 return {
                     "id": movie_id,
                     "title": data.get("nameRu") or data.get("nameEn") or "Без названия",
@@ -250,49 +260,83 @@ async def get_movie(user_id: int, genre: str = None):
                     "rating": str(data.get("ratingKinopoisk") or data.get("rating") or "0.0"),
                     "description": data.get("description") or "Описание отсутствует.",
                     "year": str(data.get("year") or "----"),
-                    "genres": genres or "Кино"
+                    "genres": ", ".join(g_list[:2]).capitalize() or "Кино"
                 }
     except Exception as e:
-        print(f"Error: {e}")
-        return {"title": "Ошибка сети", "description": "Попробуйте еще раз"}
+        print(f"Error in get_movie: {e}")
 
-    return {"title": "Ошибка", "description": "Не удалось загрузить фильм"}
+    return {"title": "Ошибка", "description": "Не удалось загрузить фильм."}
 
+
+@app.get("/check_matches/{user_id}")
+async def check_matches(user_id: int):
+    async with aiosqlite.connect(DB_NAME) as db:
+        # Ищем комнату, в которой состоит пользователь
+        async with db.execute(
+                "SELECT user1_id, user2_id FROM rooms WHERE user1_id = ? OR user2_id = ?",
+                (user_id, user_id)
+        ) as c:
+            room = await c.fetchone()
+
+        if not room:
+            return {"status": "none"}
+
+        # Определяем ID партнера
+        partner_id = room[1] if room[0] == user_id else room[0]
+        if not partner_id:
+            return {"status": "none"}
+
+        # Ищем фильмы, которые лайкнули ОБА (мэтчи)
+        # Мы проверяем лайки за последние 10 секунд, чтобы не спамить старыми мэтчами
+        query = """
+            SELECT l1.movie_title 
+            FROM likes l1
+            JOIN likes l2 ON l1.movie_id = l2.movie_id
+            WHERE l1.user_id = ? AND l2.user_id = ?
+            AND l1.timestamp > datetime('now', '-10 seconds')
+            ORDER BY l1.id DESC LIMIT 1
+        """
+        async with db.execute(query, (user_id, partner_id)) as c:
+            match = await c.fetchone()
+            if match:
+                return {"status": "match", "movie": match[0]}
+
+    return {"status": "none"}
 
 @app.post("/like")
 async def save_like(req: LikeRequest):
     async with aiosqlite.connect(DB_NAME) as db:
-        # 1. Сохраняем в лайки
+        # 1. Сохраняем лайк и просмотр
         await db.execute("INSERT INTO likes (user_id, movie_id, movie_title, poster_url) VALUES (?, ?, ?, ?)",
                          (req.user_id, req.movie_id, req.movie_title, req.poster_url))
-
-        # 2. Сохраняем в просмотренные (чтобы не показывать снова)
         await db.execute("INSERT OR IGNORE INTO seen_movies (user_id, movie_id) VALUES (?, ?)",
                          (req.user_id, req.movie_id))
 
         now = get_now()
-        await db.execute(
-            "INSERT INTO users (user_id, last_active) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET last_active=?",
-            (req.user_id, now, now))
-        await db.execute("UPDATE rooms SET last_activity = CURRENT_TIMESTAMP WHERE user1_id = ? OR user2_id = ?",
-                         (req.user_id, req.user_id))
+        await db.execute("UPDATE users SET last_active = ? WHERE user_id = ?", (now, req.user_id))
 
-        async with db.execute("""
-            SELECT r.user1_id, r.user2_id FROM rooms r
-            JOIN likes l ON (l.user_id = r.user1_id OR l.user_id = r.user2_id)
-            WHERE (r.user1_id = ? OR r.user2_id = ?) AND l.movie_id = ? AND l.user_id != ?
-        """, (req.user_id, req.user_id, req.movie_id, req.user_id)) as cursor:
-            match = await cursor.fetchone()
-            if match:
-                partner_id = match[0] if match[0] != req.user_id else match[1]
-                if partner_id:
-                    text = f"🍿 <b>У ВАС МАТЧ!</b>\nФильм: {req.movie_title}\n<a href='https://www.kinopoisk.ru/film/{req.movie_id}/'>Смотреть</a>"
+        # 2. Ищем комнату и проверяем мэтч у партнера
+        async with db.execute("SELECT user1_id, user2_id FROM rooms WHERE user1_id = ? OR user2_id = ?",
+                              (req.user_id, req.user_id)) as c:
+            room = await c.fetchone()
+
+        if room:
+            partner_id = room[1] if room[0] == req.user_id else room[0]
+            if partner_id:
+                async with db.execute("SELECT id FROM likes WHERE user_id = ? AND movie_id = ?",
+                                      (partner_id, req.movie_id)) as c:
+                    is_match = await c.fetchone()
+
+                if is_match:
+                    text = f"🍿 <b>У ВАС МАТЧ!</b>\nФильм: {req.movie_title}"
                     try:
                         await bot.send_message(req.user_id, text, parse_mode="HTML")
                         await bot.send_message(partner_id, text, parse_mode="HTML")
                     except:
                         pass
-                return {"status": "match", "movie": req.movie_title}
+                    await db.commit()
+                    return {"status": "match", "movie": req.movie_title}
+
         await db.commit()
     return {"status": "success"}
 
@@ -318,45 +362,98 @@ async def get_likes(user_id: str):
 
 @app.post("/create_room")
 async def create_room(req: RoomAction):
-    code = str(random.randint(1000, 9999))
     async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute("INSERT INTO rooms (room_id, user1_id, user1_name, genre) VALUES (?, ?, ?, ?)",
-                         (code, req.user_id, req.user_name, req.genre))
+        # ПРИНУДИТЕЛЬНАЯ ОЧИСТКА: Удаляем все комнаты, где пользователь был участником
+        # Это позволяет пересоздать комнату без ручного выхода
+        await db.execute(
+            "DELETE FROM rooms WHERE user1_id = ? OR user2_id = ?",
+            (req.user_id, req.user_id)
+        )
+
+        # Генерация нового кода
+        code = str(random.randint(1000, 9999))
+
+        # Создание новой комнаты
+        await db.execute(
+            "INSERT INTO rooms (room_id, user1_id, user1_name, genre) VALUES (?, ?, ?, ?)",
+            (code, req.user_id, req.user_name, req.genre)
+        )
         await db.commit()
+
     return {"room_id": code}
 
 
 @app.post("/join_room")
 async def join_room(req: RoomAction):
     async with aiosqlite.connect(DB_NAME) as db:
+        # ПРОВЕРКА 1: Нельзя войти к самому себе
+        async with db.execute("SELECT user1_id, genre, user1_name FROM rooms WHERE room_id = ?", (req.room_id,)) as c:
+            room = await c.fetchone()
+            if not room:
+                return {"status": "error", "message": "Комната не найдена"}
+            if room[0] == req.user_id:
+                return {"status": "error", "message": "Вы не можете войти в свою же комнату"}
+
+        # ПРОВЕРКА 2: Не занята ли комната вторым игроком
         async with db.execute("SELECT user1_name, genre FROM rooms WHERE room_id = ? AND user2_id IS NULL",
                               (req.room_id,)) as c:
-            room = await c.fetchone()
-            if room:
+            available_room = await c.fetchone()
+            if available_room:
                 await db.execute(
                     "UPDATE rooms SET user2_id = ?, user2_name = ?, last_activity = CURRENT_TIMESTAMP WHERE room_id = ?",
                     (req.user_id, req.user_name, req.room_id))
                 await db.commit()
-                return {"status": "success", "partner_name": room[0], "genre": room[1]}
-    return {"status": "error", "message": "Комната занята или не найдена"}
+                return {"status": "success", "partner_name": available_room[0], "genre": available_room[1]}
+    return {"status": "error", "message": "Комната уже заполнена"}
 
 
 @app.get("/check_room/{room_id}")
 async def check_room_status(room_id: str):
     async with aiosqlite.connect(DB_NAME) as db:
-        async with db.execute("SELECT user2_name FROM rooms WHERE room_id = ? AND user2_id IS NOT NULL",
-                              (room_id,)) as c:
+        # Достаем ID и имена обоих участников
+        async with db.execute(
+                "SELECT user1_id, user2_id, user1_name, user2_name FROM rooms WHERE room_id = ?",
+                (room_id,)
+        ) as c:
             res = await c.fetchone()
+
             if res:
-                return {"status": "joined", "partner_name": res[0]}
+                u1_id, u2_id, u1_name, u2_name = res
+                # Если гость (user2_id) уже подключился
+                if u2_id is not None:
+                    return {
+                        "status": "joined",
+                        "user1_name": u1_name,
+                        "user2_name": u2_name,
+                        "user1_id": u1_id,
+                        "user2_id": u2_id
+                    }
+
     return {"status": "waiting"}
 
 
 @app.post("/leave_room")
 async def leave_room(req: RoomAction):
     async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute("DELETE FROM rooms WHERE room_id = ? AND (user1_id = ? OR user2_id = ?)",
-                         (req.room_id, req.user_id, req.user_id))
+        # 1. Сначала проверяем, кто именно выходит: создатель (user1) или гость (user2)
+        async with db.execute(
+                "SELECT user1_id FROM rooms WHERE room_id = ?",
+                (req.room_id,)
+        ) as cursor:
+            room = await cursor.fetchone()
+
+        if room:
+            creator_id = room[0]
+            if req.user_id == creator_id:
+                # Если выходит создатель — удаляем комнату полностью
+                await db.execute("DELETE FROM rooms WHERE room_id = ?", (req.room_id,))
+            else:
+                # Если выходит гость — просто очищаем его данные, оставляя комнату в статусе 'waiting'
+                await db.execute(
+                    "UPDATE rooms SET user2_id = NULL, user2_name = NULL WHERE room_id = ?",
+                    (req.room_id,)
+                )
+
         await db.commit()
     return {"status": "success"}
 
