@@ -321,7 +321,21 @@
         .garland-title .bulb:nth-child(4) { transform: translateY(-2px); }
         .garland-title .bulb:nth-child(5) { transform: translateY(-5px); }
 
-
+        .beta-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+        
     </style>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -340,8 +354,22 @@
             </div>
         </div>
 
-        <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
-        <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем(beta)</h3><p>Найди общий матч с другом</p></div></div>
+    <div class="mode-card" onclick="selectMode('solo')">
+        <div class="mode-icon">🍿</div>
+        <div class="mode-info">
+            <h3>Один</h3>
+            <p>Листай подборку для себя</p>
+        </div>
+    </div>
+
+    <div class="mode-card" onclick="showDuoMenu()">
+        <div class="mode-icon">👫</div>
+        <div class="mode-info">
+            <h3>Вдвоем <span class="beta-badge">Beta</span></h3>
+            <p>Найди общий мэтч с другом</p>
+        </div>
+    </div>
+
         <!-- 👇👇👇 ВИДЖЕТ-КАРТОЧКА: CINEMATIC AURORA 👇👇👇 -->
         <div class="cinema-atmosphere">
             <!-- Пятна сияния -->
