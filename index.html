@@ -341,7 +341,7 @@
         </div>
 
         <div class="mode-card" onclick="selectMode('solo')"><div class="mode-icon">🍿</div><div class="mode-info"><h3>Один</h3><p>Листай подборку для себя</p></div></div>
-        <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем</h3><p>Найди общий матч с другом</p></div></div>
+        <div class="mode-card" onclick="showDuoMenu()"><div class="mode-icon">👫</div><div class="mode-info"><h3>Вдвоем(beta)</h3><p>Найди общий матч с другом</p></div></div>
         <!-- 👇👇👇 ВИДЖЕТ-КАРТОЧКА: CINEMATIC AURORA 👇👇👇 -->
         <div class="cinema-atmosphere">
             <!-- Пятна сияния -->
@@ -784,7 +784,7 @@ async function checkRoomStatus() {
                 switchTab('search', document.querySelector('.nav-item'));
                 loadMovie();
             }
-        } 
+        }
         // ИСПРАВЛЕНИЕ: Добавлена проверка на 'not_found' (когда создатель удалил комнату)
         else if ((data.status === 'waiting' || data.status === 'not_found') && isSessionActive) {
             // 1. Сбрасываем флаги немедленно
