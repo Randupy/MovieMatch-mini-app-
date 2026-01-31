@@ -108,11 +108,60 @@
         .tinder-info h2 { font-size: 1.35rem; margin: 0; font-weight: 800; color: #fff; line-height: 1.2; }
         .movie-meta { font-size: 0.85rem; color: var(--text-dim); }
         .movie-desc { font-size: 0.9rem; color: #cbd5e1; line-height: 1.4; margin-top: 4px; }
-        .tinder-btns { display: flex; justify-content: center; gap: 40px; padding: 15px 20px 20px; background: rgba(15, 23, 42, 0.8); z-index: 3; }
-        .btn-circle { width: 65px; height: 65px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; transition: 0.2s; }
-        .btn-circle:active { transform: scale(0.85); }
-        .btn-dislike { background: #fff; color: var(--danger); }
-        .btn-like { background: var(--success); color: #fff; }
+/* Контейнер кнопок - выносим его в нижнюю часть карточки */
+.tinder-btns {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.9), transparent);
+    width: 100%;
+}
+
+/* Общий стиль круглых кнопок */
+.btn-circle {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-circle:active {
+    transform: scale(0.85);
+}
+
+/* Кнопка дизлайка */
+.btn-dislike {
+    background: #1e293b;
+    color: var(--danger);
+    border: 2px solid #334155;
+}
+
+/* Кнопка лайка */
+.btn-like {
+    background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+    color: white;
+}
+
+/* Чтобы кнопки не улетали за экран на маленьких телефонах */
+.tinder-card {
+    display: flex;
+    flex-direction: column;
+    height: 85vh; /* Ограничиваем высоту карточки */
+    position: relative;
+}
+
+.tinder-info-container {
+    flex: 1; /* Описание занимает свободное место, поджимая кнопки вниз */
+}
         .action-btn { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 18px; width: 100%; font-weight: 700; font-size: 1rem; margin-top: 12px; cursor: pointer; }
 
         /* Жанры и прочее */
@@ -335,7 +384,7 @@
     box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
-        
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -428,8 +477,8 @@
                 <div id="desc" class="movie-desc">Загружаем описание фильма...</div>
             </div>
             <div class="tinder-btns">
-                <button class="btn-circle btn-dislike" onclick="handleDislike()">✕</button>
-                <button class="btn-circle btn-like" onclick="handleLike()">❤</button>
+                <button class="btn-circle btn-dislike" onclick="handleSwipe('left')">✕</button>
+                <button class="btn-circle btn-like" onclick="handleSwipe('right')">❤</button>
             </div>
         </div>
     </div>
