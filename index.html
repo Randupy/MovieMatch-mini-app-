@@ -108,25 +108,25 @@
         .tinder-info h2 { font-size: 1.35rem; margin: 0; font-weight: 800; color: #fff; line-height: 1.2; }
         .movie-meta { font-size: 0.85rem; color: var(--text-dim); }
         .movie-desc { font-size: 0.9rem; color: #cbd5e1; line-height: 1.4; margin-top: 4px; }
-.tinder-btns { 
-    display: flex; 
-    justify-content: center; 
-    gap: 40px; 
-    padding: 15px 20px 20px; 
-    background: linear-gradient(to top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8)); 
-    z-index: 3; 
+.tinder-btns {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 15px 20px 20px;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8));
+    z-index: 3;
 }
 
-.btn-circle { 
-    width: 65px; 
-    height: 65px; 
-    border-radius: 50%; 
-    border: none; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    cursor: pointer; 
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+.btn-circle {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
     -webkit-tap-highlight-color: transparent;
 }
@@ -134,9 +134,9 @@
 .btn-circle:active { transform: scale(0.85); }
 
 /* Дизлайк: Матовое стекло с красным акцентом */
-.btn-dislike { 
-    background: rgba(255, 255, 255, 0.05); 
-    color: #ff4b4b; 
+.btn-dislike {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ff4b4b;
     border: 1px solid rgba(255, 75, 75, 0.3);
     backdrop-filter: blur(10px);
 }
@@ -147,9 +147,9 @@
 }
 
 /* Лайк: Изумрудный неон */
-.btn-like { 
-    background: linear-gradient(135deg, #00e676 0%, #00c853 100%); 
-    color: #fff; 
+.btn-like {
+    background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+    color: #fff;
     box-shadow: 0 10px 25px rgba(0, 230, 118, 0.4);
 }
 
@@ -165,6 +165,28 @@
     stroke-width: 2.5px;
 }
         .action-btn { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 18px; width: 100%; font-weight: 700; font-size: 1rem; margin-top: 12px; cursor: pointer; }
+
+        .liked-movie-item {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .liked-movie-item:active { transform: scale(0.95); }
+
+        /* Маленькая кнопка удаления прямо на постере в профиле */
+        .mini-delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 75, 75, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            z-index: 2;
+        }
 
         /* Жанры и прочее */
         .genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
@@ -486,6 +508,22 @@
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
     </button>
 </div>
+        </div>
+    </div>
+
+    <!-- Новый экран детализации -->
+    <div id="movie-details-screen" class="screen">
+        <div class="exit-btn" onclick="showScreen('profile')">✕</div>
+        <div class="details-content">
+            <img id="details-poster" src="" style="width: 100%; border-radius: 20px; margin-bottom: 20px;">
+            <h2 id="details-title" style="margin-bottom: 5px;"></h2>
+            <div id="details-meta" class="movie-meta" style="margin-bottom: 15px;"></div>
+            <p id="details-desc" class="movie-desc" style="font-size: 1rem; line-height: 1.5; color: var(--text-main);"></p>
+
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <a id="watch-btn" href="" target="_blank" class="btn-primary" style="flex: 2; text-decoration: none; text-align: center; background: var(--success);">Смотреть на Кинопоиск</a>
+                <button id="delete-movie-btn" class="btn-primary" style="flex: 1; background: var(--danger);">Удалить</button>
+            </div>
         </div>
     </div>
 
@@ -1058,14 +1096,77 @@ async function handleDislike() {
 }
 
 
-        async function loadMyLikes() {
-            const uid = tg.initDataUnsafe.user?.id;
-            try {
-                const res = await fetch(`${API_BASE}/get_likes/${uid}`, {headers: {'ngrok-skip-browser-warning': 'true'}});
-                const data = await res.json();
-                document.getElementById('likes-list').innerHTML = data.length ? data.map(m => `<div class="mode-card" style="padding:10px;"><img src="${m.poster}" style="width:40px;height:60px;border-radius:8px;margin-right:10px;"><div>${m.title}</div></div>`).join('') : '<div style="text-align:center;color:gray;">Пусто</div>';
-            } catch(e) {}
+        // Загрузка списка лайков для профиля
+async function loadMyLikes() {
+    const uid = tg.initDataUnsafe.user?.id;
+    if (!uid) return;
+
+    try {
+        // Исправлен путь к API (согласно вашему main.py это /likes/)
+        const res = await fetch(`${API_BASE}/likes/${uid}`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+        const data = await res.json();
+        const container = document.getElementById('likes-list');
+
+        if (!data.length) {
+            container.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Коллекция пуста</div>';
+            return;
         }
+
+        // Рендерим сетку из постеров (как в Tinder)
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = '1fr 1fr 1fr';
+        container.style.gap = '10px';
+
+        container.innerHTML = data.map(m => `
+            <div class="liked-movie-item" onclick="openMovieDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                <img src="${m.poster_url}" style="width:100%; border-radius:12px; aspect-ratio:2/3; object-fit:cover;">
+                <div style="font-size:10px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;">
+                    ${m.movie_title}
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {
+        console.error("Ошибка загрузки профиля:", e);
+    }
+}
+
+// Открытие экрана с деталями фильма из профиля
+function openMovieDetails(movie) {
+    tg.HapticFeedback.impactOccurred('medium');
+
+    // Заполняем данными из объекта (который мы сохранили при лайке)
+    document.getElementById('details-poster').src = movie.poster_url;
+    document.getElementById('details-title').innerText = movie.movie_title;
+
+    // Так как при лайке мы сохраняем не все данные,
+    // для полного описания можно сделать доп. запрос или оставить заглушку
+    document.getElementById('details-desc').innerText = "Нажмите 'Смотреть', чтобы перейти к фильму.";
+    document.getElementById('watch-btn').href = `https://www.kinopoisk.ru/film/${movie.movie_id}/`;
+
+    // Кнопка удаления
+    document.getElementById('delete-movie-btn').onclick = () => deleteMovie(movie.movie_id);
+
+    switchTab('movie-details'); // Показываем экран деталей
+}
+
+async function deleteMovie(movieId) {
+    const uid = tg.initDataUnsafe.user?.id;
+    if (!confirm("Удалить из коллекции?")) return;
+
+    try {
+        // Путь /remove_like должен быть реализован в main.py
+        await fetch(`${API_BASE}/remove_like?user_id=${uid}&movie_id=${movieId}`, {
+            method: 'DELETE',
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+        tg.showAlert("Удалено");
+        switchTab('profile'); // Возвращаемся в профиль
+    } catch(e) {
+        tg.showAlert("Ошибка при удалении");
+    }
+}
 
         // Админка
         async function loadAdminData() {
