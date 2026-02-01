@@ -187,6 +187,53 @@
             font-size: 14px;
             z-index: 2;
         }
+        
+        /* Убираем горизонтальный скролл везде, оставляем только вертикальный */
+body {
+    overscroll-behavior: none; /* Отключает "резиновый" эффект в Telegram */
+    width: 100vw;
+    overflow-x: hidden;
+}
+
+.screen {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 120px !important; /* Поднимаем контент над навигацией */
+    -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+}
+
+/* Стили для кнопок на карточке фильма (теперь со стилем) */
+.details-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 0 5px;
+}
+
+.btn-primary {
+    border-radius: 16px;
+    padding: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: center;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+#watch-btn {
+    background: var(--success);
+    color: #000; /* Черный текст на зеленом фоне лучше читается */
+    box-shadow: 0 4px 15px rgba(0, 230, 118, 0.2);
+}
+
+#delete-movie-btn {
+    background: rgba(255, 75, 75, 0.1);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
 
         /* Жанры и прочее */
         .genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
@@ -514,15 +561,17 @@
     <!-- Новый экран детализации -->
     <div id="movie-details-screen" class="screen">
         <div class="exit-btn" onclick="switchTab('profile')">✕</div>
-        <div class="details-content">
-            <img id="details-poster" src="" style="width: 100%; border-radius: 20px; margin-bottom: 20px;">
-            <h2 id="details-title" style="margin-bottom: 5px;"></h2>
-            <div id="details-meta" class="movie-meta" style="margin-bottom: 15px;"></div>
-            <p id="details-desc" class="movie-desc" style="font-size: 1rem; line-height: 1.5; color: var(--text-main);"></p>
+        <div class="details-content" style="padding-bottom: 20px;">
+            <img id="details-poster" src="" style="width: 100%; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
 
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <a id="watch-btn" href="" target="_blank" class="btn-primary" style="flex: 2; text-decoration: none; text-align: center; background: var(--success);">Смотреть на Кинопоиск</a>
-                <button id="delete-movie-btn" class="btn-primary" style="flex: 1; background: var(--danger);">Удалить</button>
+            <h2 id="details-title" style="margin: 10px 0 5px; font-size: 1.6rem;"></h2>
+            <div id="details-meta"></div>
+
+            <p id="details-desc"></p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                <a id="watch-btn" href="" target="_blank" class="btn-primary" style="text-decoration: none; text-align: center;">Смотреть на Кинопоиск</a>
+                <button id="delete-movie-btn" class="btn-primary">Удалить из коллекции</button>
             </div>
         </div>
     </div>
@@ -1133,22 +1182,35 @@ async function loadMyLikes() {
 }
 
 // 2. Открытие карточки (исправленная логика)
-function openMovieDetails(movie) {
+async function openMovieDetails(movie) {
     tg.HapticFeedback.impactOccurred('medium');
 
-    // Заполняем поля из объекта
+    // Показываем экран
+    switchTab('movie-details');
+
+    // Заполняем данные (используем те же ключи, что в ленте)
     document.getElementById('details-poster').src = movie.poster_url || movie.poster;
     document.getElementById('details-title').innerText = movie.movie_title || movie.title;
-    document.getElementById('details-desc').innerText = "Нажмите смотреть для перехода на Кинопоиск";
 
-    // Ссылка на просмотр
+    // Добавляем мета-данные (если они сохранены в БД)
+    const meta = document.getElementById('details-meta');
+    meta.innerHTML = `
+        <span class="rating-badge" style="display:inline-block; margin-bottom:10px;">
+            ⭐ ${movie.rating || '0.0'}
+        </span>
+        <div style="color: var(--text-dim); font-size: 0.85rem;">
+            ${movie.year || ''} • ${movie.genres || 'Кино'}
+        </div>
+    `;
+
+    // Описание (если в базе нет полного, можно сделать fetch к API)
+    document.getElementById('details-desc').innerText = movie.description || "Загружаем описание...";
+
+    // Ссылка на Кинопоиск
     document.getElementById('watch-btn').href = `https://www.kinopoisk.ru/film/${movie.movie_id}/`;
 
-    // Настраиваем кнопку удаления
+    // Удаление
     document.getElementById('delete-movie-btn').onclick = () => deleteMovie(movie.movie_id, true);
-
-    // ВАЖНО: Используем id твоего экрана
-    switchTab('movie-details');
 }
 
 // 3. Функция удаления
