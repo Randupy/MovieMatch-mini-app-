@@ -1112,27 +1112,35 @@ async function handleDislike() {
         async function loadMyLikes() {
     const uid = tg.initDataUnsafe.user?.id;
     try {
-        const res = await fetch(`${API_BASE}/get_likes/${uid}`, {headers: {'ngrok-skip-browser-warning': 'true'}});
+        const res = await fetch(`${API_BASE}/get_likes/${uid}`, {
+            headers: {'ngrok-skip-browser-warning': 'true'}
+        });
         const data = await res.json();
+        const container = document.getElementById('likes-list');
 
-        document.getElementById('likes-list').innerHTML = data.length ? data.map(m => {
-            // Превращаем объект фильма в безопасную строку для передачи в функцию
-            const movieData = JSON.stringify(m).replace(/'/g, "&apos;");
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:gray;padding:20px;">Пусто</div>';
+            return;
+        }
+
+        container.innerHTML = data.map(m => {
+            // ВАЖНО: используем те ключи, которые приходят из БД (movie_id, poster_url, movie_title)
+            const movieJson = JSON.stringify(m).replace(/'/g, "&apos;");
+            const mid = m.movie_id;
 
             return `
-            <div class="liked-item-container" style="position: relative; display: block;">
-                <button class="mini-delete-btn" onclick="event.stopPropagation(); deleteMovie(${m.movie_id})">✕</button>
-
-                <div class="mode-card" style="padding:10px; display:flex; align-items:center;" onclick='openMovieDetails(${movieData})'>
+            <div class="liked-item-container" style="position:relative; margin-bottom:10px;">
+                <button class="mini-delete-btn" onclick="event.stopPropagation(); deleteMovie(${mid})">✕</button>
+                <div class="mode-card" style="padding:10px; margin:0; display:flex; align-items:center;" onclick='openMovieDetails(${movieJson})'>
                     <img src="${m.poster_url}" style="width:40px;height:60px;border-radius:8px;margin-right:10px;object-fit:cover;">
-                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                    <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">
                         ${m.movie_title}
                     </div>
                 </div>
             </div>`;
-        }).join('') : '<div style="text-align:center;color:gray;padding:20px;">Пусто</div>';
+        }).join('');
     } catch(e) {
-        console.error("Ошибка загрузки лайков:", e);
+        console.error("Ошибка загрузки:", e);
     }
 }
 
