@@ -108,11 +108,88 @@
         .tinder-info h2 { font-size: 1.35rem; margin: 0; font-weight: 800; color: #fff; line-height: 1.2; }
         .movie-meta { font-size: 0.85rem; color: var(--text-dim); }
         .movie-desc { font-size: 0.9rem; color: #cbd5e1; line-height: 1.4; margin-top: 4px; }
-        .tinder-btns { display: flex; justify-content: center; gap: 40px; padding: 15px 20px 20px; background: rgba(15, 23, 42, 0.8); z-index: 3; }
-        .btn-circle { width: 65px; height: 65px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; transition: 0.2s; }
-        .btn-circle:active { transform: scale(0.85); }
-        .btn-dislike { background: #fff; color: var(--danger); }
-        .btn-like { background: var(--success); color: #fff; }
+        /* Контейнер кнопок - закрепляем внизу карточки */
+        .tinder-btns {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 35px; /* Расстояние между кнопками */
+            padding: 20px 0 30px 0;
+            width: 100%;
+            margin-top: auto; /* Прижимает кнопки к низу */
+            position: relative;
+            z-index: 20;
+        }
+        
+        /* Общий стиль кнопок */
+        .btn-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Эффект нажатия */
+        .btn-circle:active {
+            transform: scale(0.9);
+        }
+        
+        /* Кнопка Дизлайка (Стильный темный + красный акцент) */
+        .btn-dislike {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.15);
+        }
+        
+        .btn-dislike:hover {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+        
+        /* Кнопка Лайка (Яркий неоновый градиент) */
+        .btn-like {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-like:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5);
+        }
+        
+        /* SVG иконки внутри кнопок */
+        .btn-circle svg {
+            width: 32px;
+            height: 32px;
+            stroke-width: 2.5;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+        /* Анимация пульсации для лайка (призыв к действию) */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .btn-like {
+            animation: pulse-glow 3s infinite;
+        }
         .action-btn { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 18px; width: 100%; font-weight: 700; font-size: 1rem; margin-top: 12px; cursor: pointer; }
 
         /* Жанры и прочее */
@@ -427,10 +504,20 @@
                 <div id="meta" class="movie-meta">---- • Кино</div>
                 <div id="desc" class="movie-desc">Загружаем описание фильма...</div>
             </div>
-            <div class="tinder-btns">
-                <button class="btn-circle btn-dislike" onclick="handleDislike()">✕</button>
-                <button class="btn-circle btn-like" onclick="handleLike()">❤</button>
-            </div>
+           <div class="tinder-btns">
+    <button class="btn-circle btn-dislike" onclick="handleSwipe('left')">
+        <svg viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+    </button>
+
+    <button class="btn-circle btn-like" onclick="handleSwipe('right')">
+        <svg viewBox="0 0 24 24" style="fill: transparent; stroke: white;">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+    </button>
+</div>
         </div>
     </div>
 
@@ -1041,3 +1128,4 @@ async function handleDislike() {
     </script>
 </body>
 </html>
+
