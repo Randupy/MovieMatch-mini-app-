@@ -1102,33 +1102,35 @@ async function loadMyLikes() {
     if (!uid) return;
 
     try {
-        // Исправлен путь к API (согласно вашему main.py это /likes/)
+        // Проверь этот URL! В твоем main.py скорее всего "/likes/"
         const res = await fetch(`${API_BASE}/likes/${uid}`, {
             headers: { 'ngrok-skip-browser-warning': 'true' }
         });
+        
+        if (!res.ok) throw new Error("Ошибка сервера");
+        
         const data = await res.json();
-        const container = document.getElementById('likes-list');
+        const listElement = document.getElementById('likes-list');
 
-        if (!data.length) {
-            container.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Коллекция пуста</div>';
+        if (!data || data.length === 0) {
+            listElement.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Список пуст</div>';
             return;
         }
 
-        // Рендерим сетку из постеров (как в Tinder)
-        container.style.display = 'grid';
-        container.style.gridTemplateColumns = '1fr 1fr 1fr';
-        container.style.gap = '10px';
-
-        container.innerHTML = data.map(m => `
-            <div class="liked-movie-item" onclick="openMovieDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
-                <img src="${m.poster_url}" style="width:100%; border-radius:12px; aspect-ratio:2/3; object-fit:cover;">
-                <div style="font-size:10px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;">
-                    ${m.movie_title}
+        // Используем правильные ключи: movie_title и poster_url
+        listElement.innerHTML = data.map(m => `
+            <div class="mode-card" style="padding:10px; margin-bottom:10px; display:flex; align-items:center;" onclick="openMovieDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                <img src="${m.poster_url}" style="width:50px; height:75px; border-radius:8px; margin-right:15px; object-fit:cover;">
+                <div style="flex:1;">
+                    <div style="font-weight:bold; font-size:0.9rem;">${m.movie_title}</div>
+                    <div style="color:var(--accent); font-size:0.8rem;">Лайкнуто</div>
                 </div>
+                <span style="color:var(--text-dim);">›</span>
             </div>
         `).join('');
     } catch(e) {
-        console.error("Ошибка загрузки профиля:", e);
+        console.error("Ошибка профиля:", e);
+        document.getElementById('likes-list').innerHTML = '<div style="color:red; text-align:center;">Ошибка загрузки</div>';
     }
 }
 
