@@ -1103,12 +1103,12 @@ async function loadMyLikes() {
 
     try {
         // Проверь этот URL! В твоем main.py скорее всего "/likes/"
-        const res = await fetch(`${API_BASE}/likes/${uid}`, {
+        const res = await fetch(`${API_BASE}/get_likes/${uid}`, {
             headers: { 'ngrok-skip-browser-warning': 'true' }
         });
-        
+
         if (!res.ok) throw new Error("Ошибка сервера");
-        
+
         const data = await res.json();
         const listElement = document.getElementById('likes-list');
 
