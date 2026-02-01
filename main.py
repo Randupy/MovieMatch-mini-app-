@@ -36,6 +36,10 @@ class LikeRequest(BaseModel):
     movie_id: int
     movie_title: str
     poster_url: str
+    description: str = ""  # Добавили поле
+    rating: str = "0.0"  # Добавили поле
+    year: str = ""  # Добавили поле
+    genres: str = ""  # Добавили поле
 
 
 class RoomAction(BaseModel):
@@ -103,7 +107,11 @@ async def lifespan(app: FastAPI):
                 movie_id INTEGER,
                 movie_title TEXT,
                 poster_url TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                description TEXT,
+                rating TEXT,
+                year TEXT,
+                genres TEXT
             )
         """)
         # НОВАЯ ТАБЛИЦА: Просмотренные фильмы (чтобы не показывать повторно)
@@ -308,16 +316,22 @@ async def check_matches(user_id: int):
 @app.post("/like")
 async def save_like(req: LikeRequest):
     async with aiosqlite.connect(DB_NAME) as db:
-        # 1. Сохраняем лайк и просмотр
-        await db.execute("INSERT INTO likes (user_id, movie_id, movie_title, poster_url) VALUES (?, ?, ?, ?)",
-                         (req.user_id, req.movie_id, req.movie_title, req.poster_url))
+        # 1. Сохраняем лайк со ВСЕМИ данными (используем INSERT OR IGNORE чтобы не было дублей)
+        await db.execute("""
+            INSERT OR IGNORE INTO likes 
+            (user_id, movie_id, movie_title, poster_url, description, rating, year, genres) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (req.user_id, req.movie_id, req.movie_title, req.poster_url,
+              req.description, req.rating, req.year, req.genres))
+
+        # Сохраняем в список просмотренных
         await db.execute("INSERT OR IGNORE INTO seen_movies (user_id, movie_id) VALUES (?, ?)",
                          (req.user_id, req.movie_id))
 
         now = get_now()
         await db.execute("UPDATE users SET last_active = ? WHERE user_id = ?", (now, req.user_id))
 
-        # 2. Ищем комнату и проверяем мэтч у партнера
+        # 2. Ищем комнату и проверяем мэтч у партнера (Твоя оригинальная логика)
         async with db.execute("SELECT user1_id, user2_id FROM rooms WHERE user1_id = ? OR user2_id = ?",
                               (req.user_id, req.user_id)) as c:
             room = await c.fetchone()
@@ -330,7 +344,7 @@ async def save_like(req: LikeRequest):
                     is_match = await c.fetchone()
 
                 if is_match:
-                    text = f"🍿 <b>У ВАС МАТЧ!</b>\nФильм: {req.movie_title}"
+                    text = f"🍿 <b>У ВАС МЭТЧ!</b>\nФильм: {req.movie_title}"
                     try:
                         await bot.send_message(req.user_id, text, parse_mode="HTML")
                         await bot.send_message(partner_id, text, parse_mode="HTML")
@@ -354,13 +368,49 @@ async def save_dislike(req: LikeRequest):
 
 
 @app.get("/get_likes/{user_id}")
-async def get_likes(user_id: str):
+async def get_likes(user_id: int):
     async with aiosqlite.connect(DB_NAME) as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT movie_title, poster_url FROM likes WHERE user_id = ? ORDER BY id DESC",
-                              (user_id,)) as c:
-            return [{"title": r["movie_title"], "poster": r["poster_url"]} for r in await c.fetchall()]
+        db.row_factory = aiosqlite.Row  # Это позволит обращаться к колонкам по именам
+        async with db.execute("SELECT * FROM likes WHERE user_id = ? ORDER BY id DESC", (user_id,)) as c:
+            rows = await c.fetchall()
+            # Превращаем строки базы в список словарей (JSON)
+            return [dict(r) for r in rows]
 
+
+@app.delete("/remove_like")
+async def remove_like(user_id: int, movie_id: int):
+    """
+    Удаляет лайк из базы данных.
+    Параметры передаются в URL: /remove_like?user_id=123&movie_id=456
+    """
+    print(f"DEBUG: Попытка удаления лайка: user={user_id}, movie={movie_id}")
+
+    try:
+        async with aiosqlite.connect(DB_NAME) as db:
+            # Сначала проверяем, есть ли такой лайк вообще
+            async with db.execute(
+                    "SELECT 1 FROM likes WHERE user_id = ? AND movie_id = ?",
+                    (user_id, movie_id)
+            ) as cursor:
+                exists = await cursor.fetchone()
+
+            if not exists:
+                print(f"DEBUG: Лайк не найден в базе")
+                return {"status": "not_found", "message": "Лайк не найден"}
+
+            # Удаляем
+            await db.execute(
+                "DELETE FROM likes WHERE user_id = ? AND movie_id = ?",
+                (user_id, movie_id)
+            )
+            await db.commit()
+
+            print(f"DEBUG: Лайк успешно удален")
+            return {"status": "success"}
+
+    except Exception as e:
+        print(f"ERROR в remove_like: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/create_room")
