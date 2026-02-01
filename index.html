@@ -513,7 +513,7 @@
 
     <!-- Новый экран детализации -->
     <div id="movie-details-screen" class="screen">
-        <div class="exit-btn" onclick="showScreen('profile')">✕</div>
+        <div class="exit-btn" onclick="switchTab('profile')">✕</div>
         <div class="details-content">
             <img id="details-poster" src="" style="width: 100%; border-radius: 20px; margin-bottom: 20px;">
             <h2 id="details-title" style="margin-bottom: 5px;"></h2>
@@ -1096,19 +1096,14 @@ async function handleDislike() {
 }
 
 
-        // Загрузка списка лайков для профиля
+// 1. Загрузка коллекции
 async function loadMyLikes() {
-    const uid = tg.initDataUnsafe.user?.id;
-    if (!uid) return;
-
+    const uid = tg.initDataUnsafe.user?.id || 123;
     try {
-        // Проверь этот URL! В твоем main.py скорее всего "/likes/"
+        // Используем верный эндпоинт /get_likes/
         const res = await fetch(`${API_BASE}/get_likes/${uid}`, {
             headers: { 'ngrok-skip-browser-warning': 'true' }
         });
-
-        if (!res.ok) throw new Error("Ошибка сервера");
-
         const data = await res.json();
         const listElement = document.getElementById('likes-list');
 
@@ -1117,56 +1112,64 @@ async function loadMyLikes() {
             return;
         }
 
-        // Используем правильные ключи: movie_title и poster_url
+        // ВАЖНО: В твоем Python коде поля называются title и poster (или movie_title/poster_url)
+        // Если постеры не грузятся, проверь: m.poster_url или m.poster
+        listElement.style.display = 'grid';
+        listElement.style.gridTemplateColumns = '1fr 1fr 1fr';
+        listElement.style.gap = '10px';
+
         listElement.innerHTML = data.map(m => `
-            <div class="mode-card" style="padding:10px; margin-bottom:10px; display:flex; align-items:center;" onclick="openMovieDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
-                <img src="${m.poster_url}" style="width:50px; height:75px; border-radius:8px; margin-right:15px; object-fit:cover;">
-                <div style="flex:1;">
-                    <div style="font-weight:bold; font-size:0.9rem;">${m.movie_title}</div>
-                    <div style="color:var(--accent); font-size:0.8rem;">Лайкнуто</div>
+            <div class="liked-movie-item" onclick='openMovieDetails(${JSON.stringify(m)})'>
+                <button class="mini-delete-btn" onclick="event.stopPropagation(); deleteMovie(${m.movie_id})">✕</button>
+                <img src="${m.poster_url || m.poster}" style="width:100%; border-radius:12px; aspect-ratio:2/3; object-fit:cover;">
+                <div style="font-size:10px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;">
+                    ${m.movie_title || m.title}
                 </div>
-                <span style="color:var(--text-dim);">›</span>
             </div>
         `).join('');
     } catch(e) {
         console.error("Ошибка профиля:", e);
-        document.getElementById('likes-list').innerHTML = '<div style="color:red; text-align:center;">Ошибка загрузки</div>';
     }
 }
 
-// Открытие экрана с деталями фильма из профиля
+// 2. Открытие карточки (исправленная логика)
 function openMovieDetails(movie) {
     tg.HapticFeedback.impactOccurred('medium');
 
-    // Заполняем данными из объекта (который мы сохранили при лайке)
-    document.getElementById('details-poster').src = movie.poster_url;
-    document.getElementById('details-title').innerText = movie.movie_title;
+    // Заполняем поля из объекта
+    document.getElementById('details-poster').src = movie.poster_url || movie.poster;
+    document.getElementById('details-title').innerText = movie.movie_title || movie.title;
+    document.getElementById('details-desc').innerText = "Нажмите смотреть для перехода на Кинопоиск";
 
-    // Так как при лайке мы сохраняем не все данные,
-    // для полного описания можно сделать доп. запрос или оставить заглушку
-    document.getElementById('details-desc').innerText = "Нажмите 'Смотреть', чтобы перейти к фильму.";
+    // Ссылка на просмотр
     document.getElementById('watch-btn').href = `https://www.kinopoisk.ru/film/${movie.movie_id}/`;
 
-    // Кнопка удаления
-    document.getElementById('delete-movie-btn').onclick = () => deleteMovie(movie.movie_id);
+    // Настраиваем кнопку удаления
+    document.getElementById('delete-movie-btn').onclick = () => deleteMovie(movie.movie_id, true);
 
-    switchTab('movie-details'); // Показываем экран деталей
+    // ВАЖНО: Используем id твоего экрана
+    switchTab('movie-details');
 }
 
-async function deleteMovie(movieId) {
-    const uid = tg.initDataUnsafe.user?.id;
-    if (!confirm("Удалить из коллекции?")) return;
+// 3. Функция удаления
+async function deleteMovie(movieId, shouldExit = false) {
+    if (!confirm("Удалить фильм из коллекции?")) return;
 
+    const uid = tg.initDataUnsafe.user?.id || 123;
     try {
-        // Путь /remove_like должен быть реализован в main.py
-        await fetch(`${API_BASE}/remove_like?user_id=${uid}&movie_id=${movieId}`, {
+        // Убедись, что в main.py есть @app.delete("/remove_like")
+        const res = await fetch(`${API_BASE}/remove_like?user_id=${uid}&movie_id=${movieId}`, {
             method: 'DELETE',
             headers: { 'ngrok-skip-browser-warning': 'true' }
         });
-        tg.showAlert("Удалено");
-        switchTab('profile'); // Возвращаемся в профиль
+
+        if (res.ok) {
+            tg.HapticFeedback.notificationOccurred('success');
+            if (shouldExit) switchTab('profile');
+            loadMyLikes(); // Обновляем список
+        }
     } catch(e) {
-        tg.showAlert("Ошибка при удалении");
+        tg.showAlert("Не удалось удалить фильм");
     }
 }
 
