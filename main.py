@@ -4,6 +4,7 @@ import os
 import aiohttp
 import aiosqlite
 import datetime
+import dateparser
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -13,6 +14,7 @@ from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
 from aiogram.types import BotCommand, BotCommandScopeDefault
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from datetime import datetime as dt, timedelta # Добавляем 'as dt' для новых
 
 load_dotenv()
 
@@ -63,7 +65,7 @@ class TicketRequest(BaseModel):
 
 # --- Вспомогательные функции ---
 def get_now():
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 async def is_admin(user_id):
@@ -360,6 +362,7 @@ async def get_likes(user_id: str):
             return [{"title": r["movie_title"], "poster": r["poster_url"]} for r in await c.fetchall()]
 
 
+
 @app.post("/create_room")
 async def create_room(req: RoomAction):
     async with aiosqlite.connect(DB_NAME) as db:
@@ -540,7 +543,7 @@ async def reply_ticket_web(req: TicketReply):
         if ticket:
             try:
                 # Отправляем в Telegram
-                await bot.send_message(ticket[0], f"📨 <b>Ответ поддержки:</b>\n\nВ: <i>{ticket[1]}</i>\n\n👉 {req.text}",
+                await bot.send_message(ticket[0], f"📨 <b>Ответ поддержки:</b>\n\nВы: <i>{ticket[1]}</i>\n\n👉 {req.text}",
                                        parse_mode="HTML")
 
                 # Сохраняем ответ в базу и закрываем тикет
@@ -596,6 +599,107 @@ async def cmd_start(message: types.Message):
 
     await message.answer("👋 Привет! Жми кнопку ниже, чтобы начать.", reply_markup=kb.as_markup())
 
+
+# Состояния
+admin_states = {}
+broadcast_data = {}
+
+
+@dp.message(Command("broadcast"))
+async def start_broadcast(message: types.Message):
+    if message.from_user.id != SUPER_ADMIN_ID: return
+    admin_states[message.from_user.id] = 'waiting_msg'
+    await message.answer("🚀 Режим рассылки!\n\n"
+"Отправьте сообщение (текст, фото, кружок и т.д.), которое нужно разослать.\n"
+"Чтобы отменить: /cancel")
+
+
+@dp.message(Command("cancel"))
+async def cancel_br(message: types.Message):
+    admin_states.pop(message.from_user.id, None)
+    broadcast_data.pop(message.from_user.id, None)
+    await message.answer("❌ Отменено.")
+
+
+@dp.message()
+async def handle_broadcast(message: types.Message):
+    uid = message.from_user.id
+    # Проверяем, что пишет админ и что он в процессе создания рассылки
+    if uid != SUPER_ADMIN_ID or uid not in admin_states:
+        return
+
+    state = admin_states[uid]
+
+    if state == 'waiting_msg':
+        broadcast_data[uid] = message
+        admin_states[uid] = 'waiting_time'
+        await message.answer(
+            "⏳ Когда отправить?\n\n"
+            "Примеры:\n"
+            " `0` — мгновенно\n"
+            " `18:00` — сегодня в шесть вечера\n"
+            " `31.01 12:00` — конкретный день\n"
+            " `через 3 дня` — (используя dateparser)"
+        )
+
+    elif state == 'waiting_time':
+        # Используем dt (datetime as dt) для корректной работы с датами
+        now = dt.now()
+        target_time = None
+
+        if message.text == "0":
+            target_time = now
+        else:
+            # Парсим время через dateparser
+            target_time = dateparser.parse(message.text, settings={'PREFER_DATES_FROM': 'future'})
+
+            if not target_time:
+                await message.answer("⚠️ Не понял формат. Попробуй еще раз (например, `15:30` или `01.02 10:00`)")
+                return
+
+        # Если время получилось в прошлом (например, ввели 10:00, а сейчас уже 11:00), прибавляем день
+        if target_time < now:
+            target_time += timedelta(days=1)
+
+        msg_to_send = broadcast_data[uid]
+        # Очищаем состояния сразу, чтобы админ мог пользоваться ботом дальше
+        admin_states.pop(uid)
+        broadcast_data.pop(uid)
+
+        wait_seconds = (target_time - now).total_seconds()
+
+        await message.answer(f"✅ Запланировано на: `{target_time.strftime('%d.%m %H:%M')}`\n"
+                             f"(Ожидание: {int(wait_seconds // 3600)}ч {int((wait_seconds % 3600) // 60)}м)")
+
+        # Фоновое ожидание перед отправкой
+        if wait_seconds > 0:
+            await asyncio.sleep(wait_seconds)
+
+        # ПРОЦЕСС РАССЫЛКИ
+        async with aiosqlite.connect(DB_NAME) as db:
+            async with db.execute("SELECT user_id FROM users") as c:
+                users = await c.fetchall()
+
+        success, blocked, errors = 0, 0, 0
+        for u in users:
+            try:
+                # Копируем сообщение (текст, медиа, кружки и т.д.)
+                await msg_to_send.copy_to(chat_id=u[0])
+                success += 1
+                await asyncio.sleep(0.05) # Плавная отправка, чтобы не поймать флуд-контроль
+            except Exception as e:
+                if "bot was blocked" in str(e).lower() or "chat not found" in str(e).lower():
+                    blocked += 1
+                else:
+                    errors += 1
+
+        # Отчет админу по завершении
+        await bot.send_message(uid,
+                               f"📊 Результаты рассылки:\n"
+                               f"✅ Доставлено: {success}\n"
+                               f"🚫 Заблокировали бота: {blocked}\n"
+                               f"⚠️ Ошибки: {errors}"
+                               )
 
 if __name__ == "__main__":
     import uvicorn
