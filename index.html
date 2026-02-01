@@ -187,52 +187,64 @@
             font-size: 14px;
             z-index: 2;
         }
-        
-        /* Убираем горизонтальный скролл везде, оставляем только вертикальный */
-body {
-    overscroll-behavior: none; /* Отключает "резиновый" эффект в Telegram */
-    width: 100vw;
-    overflow-x: hidden;
-}
 
-.screen {
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: 120px !important; /* Поднимаем контент над навигацией */
-    -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
-}
-
-/* Стили для кнопок на карточке фильма (теперь со стилем) */
-.details-actions {
+/* Профиль: вертикальный список */
+#likes-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-bottom: 20px;
+}
+
+.liked-movie-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+}
+
+.liked-movie-card img {
+    width: 60px;
+    height: 90px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.liked-movie-info h4 { margin: 0 0 5px 0; font-size: 1rem; color: #fff; }
+.liked-movie-info p { margin: 0; font-size: 0.8rem; color: var(--text-dim); }
+
+/* Кнопки в деталях */
+.details-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     margin-top: 20px;
-    padding: 0 5px;
 }
 
 .btn-primary {
-    border-radius: 16px;
     padding: 16px;
-    font-weight: 700;
+    border-radius: 14px;
     border: none;
+    font-weight: 700;
+    font-size: 1rem;
     cursor: pointer;
-    transition: 0.2s;
     text-align: center;
     text-decoration: none;
-    font-size: 1rem;
+    transition: 0.2s;
 }
 
-#watch-btn {
-    background: var(--success);
-    color: #000; /* Черный текст на зеленом фоне лучше читается */
-    box-shadow: 0 4px 15px rgba(0, 230, 118, 0.2);
-}
+#watch-btn { background: var(--success); color: #000; }
+#delete-movie-btn { background: rgba(255, 75, 75, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 
-#delete-movie-btn {
-    background: rgba(255, 75, 75, 0.1);
-    border: 1px solid var(--danger);
-    color: var(--danger);
+/* Фикс скролла только для экранов */
+.screen {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 120px !important;
 }
 
         /* Жанры и прочее */
@@ -1145,94 +1157,66 @@ async function handleDislike() {
 }
 
 
-// 1. Загрузка коллекции
 async function loadMyLikes() {
-    const uid = tg.initDataUnsafe.user?.id || 123;
+    const uid = tg.initDataUnsafe.user?.id;
     try {
-        // Используем верный эндпоинт /get_likes/
-        const res = await fetch(`${API_BASE}/get_likes/${uid}`, {
-            headers: { 'ngrok-skip-browser-warning': 'true' }
-        });
+        const res = await fetch(`${API_BASE}/get_likes/${uid}`, { headers: {'ngrok-skip-browser-warning':'true'} });
         const data = await res.json();
-        const listElement = document.getElementById('likes-list');
+        const container = document.getElementById('likes-list');
 
-        if (!data || data.length === 0) {
-            listElement.innerHTML = '<div style="text-align:center;color:gray;padding:20px">Список пуст</div>';
+        if(!data.length) {
+            container.innerHTML = '<div style="text-align:center;color:gray;padding:40px">Коллекция пуста</div>';
             return;
         }
 
-        // ВАЖНО: В твоем Python коде поля называются title и poster (или movie_title/poster_url)
-        // Если постеры не грузятся, проверь: m.poster_url или m.poster
-        listElement.style.display = 'grid';
-        listElement.style.gridTemplateColumns = '1fr 1fr 1fr';
-        listElement.style.gap = '10px';
-
-        listElement.innerHTML = data.map(m => `
-            <div class="liked-movie-item" onclick='openMovieDetails(${JSON.stringify(m)})'>
-                <button class="mini-delete-btn" onclick="event.stopPropagation(); deleteMovie(${m.movie_id})">✕</button>
-                <img src="${m.poster_url || m.poster}" style="width:100%; border-radius:12px; aspect-ratio:2/3; object-fit:cover;">
-                <div style="font-size:10px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;">
-                    ${m.movie_title || m.title}
+        container.innerHTML = data.map(m => `
+            <div class="liked-movie-card" onclick='openMovieDetails(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
+                <img src="${m.poster_url}">
+                <div class="liked-movie-info">
+                    <h4>${m.movie_title}</h4>
+                    <p>Нажмите, чтобы посмотреть детали</p>
                 </div>
+                <div style="margin-left:auto; color:var(--text-dim)">❯</div>
             </div>
         `).join('');
-    } catch(e) {
-        console.error("Ошибка профиля:", e);
-    }
+    } catch(e) { console.error(e); }
 }
 
-// 2. Открытие карточки (исправленная логика)
-async function openMovieDetails(movie) {
+function openMovieDetails(movie) {
     tg.HapticFeedback.impactOccurred('medium');
 
-    // Показываем экран
+    // Заполняем экран деталей
+    document.getElementById('details-poster').src = movie.poster_url;
+    document.getElementById('details-title').innerText = movie.movie_title;
+
+    // Подтягиваем данные из базы (если их нет в 'likes', будет пусто)
+    document.getElementById('details-meta').innerText = "Рейтинг: КП";
+    document.getElementById('details-desc').innerText = "Для просмотра полной информации перейдите на сайт Кинопоиска.";
+
+    // Исправляем ссылку: если в БД ID фильма, ссылка должна быть такой:
+    const kpUrl = `https://www.kinopoisk.ru/film/${movie.movie_id}/`;
+    document.getElementById('watch-btn').href = kpUrl;
+
+    // Настраиваем удаление
+    document.getElementById('delete-movie-btn').onclick = () => deleteMovie(movie.movie_id);
+
     switchTab('movie-details');
-
-    // Заполняем данные (используем те же ключи, что в ленте)
-    document.getElementById('details-poster').src = movie.poster_url || movie.poster;
-    document.getElementById('details-title').innerText = movie.movie_title || movie.title;
-
-    // Добавляем мета-данные (если они сохранены в БД)
-    const meta = document.getElementById('details-meta');
-    meta.innerHTML = `
-        <span class="rating-badge" style="display:inline-block; margin-bottom:10px;">
-            ⭐ ${movie.rating || '0.0'}
-        </span>
-        <div style="color: var(--text-dim); font-size: 0.85rem;">
-            ${movie.year || ''} • ${movie.genres || 'Кино'}
-        </div>
-    `;
-
-    // Описание (если в базе нет полного, можно сделать fetch к API)
-    document.getElementById('details-desc').innerText = movie.description || "Загружаем описание...";
-
-    // Ссылка на Кинопоиск
-    document.getElementById('watch-btn').href = `https://www.kinopoisk.ru/film/${movie.movie_id}/`;
-
-    // Удаление
-    document.getElementById('delete-movie-btn').onclick = () => deleteMovie(movie.movie_id, true);
 }
 
-// 3. Функция удаления
-async function deleteMovie(movieId, shouldExit = false) {
-    if (!confirm("Удалить фильм из коллекции?")) return;
-
-    const uid = tg.initDataUnsafe.user?.id || 123;
+async function deleteMovie(movieId) {
+    if(!confirm("Удалить из коллекции?")) return;
+    const uid = tg.initDataUnsafe.user?.id;
     try {
-        // Убедись, что в main.py есть @app.delete("/remove_like")
         const res = await fetch(`${API_BASE}/remove_like?user_id=${uid}&movie_id=${movieId}`, {
             method: 'DELETE',
-            headers: { 'ngrok-skip-browser-warning': 'true' }
+            headers: {'ngrok-skip-browser-warning':'true'}
         });
-
-        if (res.ok) {
-            tg.HapticFeedback.notificationOccurred('success');
-            if (shouldExit) switchTab('profile');
+        if(res.ok) {
+            tg.showAlert("Удалено!");
+            switchTab('profile'); // Возвращаемся в профиль
             loadMyLikes(); // Обновляем список
         }
-    } catch(e) {
-        tg.showAlert("Не удалось удалить фильм");
-    }
+    } catch(e) { tg.showAlert("Ошибка удаления"); }
 }
 
         // Админка
