@@ -108,67 +108,12 @@
         .tinder-info h2 { font-size: 1.35rem; margin: 0; font-weight: 800; color: #fff; line-height: 1.2; }
         .movie-meta { font-size: 0.85rem; color: var(--text-dim); }
         .movie-desc { font-size: 0.9rem; color: #cbd5e1; line-height: 1.4; margin-top: 4px; }
-        /* Контейнер кнопок - закрепляем внизу карточки */
-.tinder-btns {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    padding: 15px 0 25px;
-    width: 100%;
-    z-index: 10;
-}
-
-.btn-circle {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
-}
-
-/* Дизлайк: Эффект стекла */
-.btn-dislike {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: #ff4b4b;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* Лайк: Сочный зеленый градиент */
-.btn-like {
-    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); /* Можно сменить на зеленый ниже */
-    background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
-    color: white;
-    box-shadow: 0 10px 20px rgba(0, 230, 118, 0.3);
-}
-
-.btn-circle svg {
-    width: 28px;
-    height: 28px;
-}
-
-/* Анимации при наведении и нажатии */
-.btn-circle:active {
-    transform: scale(0.85);
-}
-
-.btn-like:hover {
-    box-shadow: 0 15px 30px rgba(0, 230, 118, 0.5);
-    transform: translateY(-3px);
-}
-
-.btn-dislike:hover {
-    background: rgba(255, 75, 75, 0.2);
-    border-color: rgba(255, 75, 75, 0.5);
-}
+        .tinder-btns { display: flex; justify-content: center; gap: 40px; padding: 15px 20px 20px; background: rgba(15, 23, 42, 0.8); z-index: 3; }
+        .btn-circle { width: 65px; height: 65px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; transition: 0.2s; }
+        .btn-circle:active { transform: scale(0.85); }
+        .btn-dislike { background: #fff; color: var(--danger); }
+        .btn-like { background: var(--success); color: #fff; }
+        .action-btn { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 18px; width: 100%; font-weight: 700; font-size: 1rem; margin-top: 12px; cursor: pointer; }
 
         /* Жанры и прочее */
         .genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
@@ -390,7 +335,7 @@
     box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
-        
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -482,30 +427,10 @@
                 <div id="meta" class="movie-meta">---- • Кино</div>
                 <div id="desc" class="movie-desc">Загружаем описание фильма...</div>
             </div>
-           <div id="search-screen" class="screen">
-    <div id="partner-badge" class="partner-badge">В комнате с: Имя</div>
-    <div class="tinder-card">
-        <div class="exit-btn" onclick="exitSearch()">✕</div>
-        <div class="poster-wrapper">
-            <img id="poster-blur" class="poster-blur" src="">
-            <img id="poster" class="tinder-img" src="">
-        </div>
-        <div class="tinder-info-container">
-            <div id="rating" class="rating-badge">0.0</div>
-            <div class="tinder-info"><h2 id="title">Загрузка...</h2></div>
-            <div id="meta" class="movie-meta">---- • Кино</div>
-            <div id="desc" class="movie-desc">Загружаем описание фильма...</div>
-        </div>
-        <div class="tinder-btns">
-            <button class="btn-circle btn-dislike" onclick="handleDislike()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-            <button class="btn-circle btn-like" onclick="handleLike()">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-            </button>
-        </div>
-    </div>
-</div>
+            <div class="tinder-btns">
+                <button class="btn-circle btn-dislike" onclick="handleDislike()">✕</button>
+                <button class="btn-circle btn-like" onclick="handleLike()">❤</button>
+            </div>
         </div>
     </div>
 
@@ -1116,4 +1041,3 @@ async function handleDislike() {
     </script>
 </body>
 </html>
-
