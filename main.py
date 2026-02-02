@@ -637,17 +637,32 @@ async def broadcast_web(req: BroadcastRequest):
 async def cmd_start(message: types.Message):
     async with aiosqlite.connect(DB_NAME) as db:
         await db.execute(
-            "INSERT INTO users (user_id, username, first_name, joined_date, last_active) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET last_active=?",
-            (message.from_user.id, message.from_user.username, message.from_user.first_name, get_now(), get_now(),
-             get_now()))
+            "INSERT INTO users (user_id, username, first_name, joined_date, last_active) "
+            "VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET last_active=?",
+            (message.from_user.id, message.from_user.username, message.from_user.first_name,
+             get_now(), get_now(), get_now())
+        )
         await db.commit()
 
-    # ⚠️ ССЫЛКА НА ПРИЛОЖЕНИЕ (Замени на актуальную при перезапуске ngrok!)
-    kb = InlineKeyboardBuilder()
-    kb.button(text="🔥 Открыть MovieMatch",
-              web_app=types.WebAppInfo(url="https://larviparous-intercondylic-sherilyn.ngrok-free.dev"))
+    # Ссылка с параметром для обхода предупреждения ngrok
+    # ВАЖНО: убедись, что если в URL уже есть '?', то добавляй через '&'
+    web_app_url = "https://larviparous-intercondylic-sherilyn.ngrok-free.dev/ngrok-skip-browser-warning=true"
 
-    await message.answer("👋 Привет! Жми кнопку ниже, чтобы начать.", reply_markup=kb.as_markup())
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🎬 Открыть MovieMatch",
+              web_app=types.WebAppInfo(url=web_app_url))
+
+    welcome_text = (
+        f"👋 <b>Привет, {message.from_user.first_name}!</b>\n\n"
+        f"<b>MovieMatch</b> — это самый удобный способ найти кино на вечер.\n\n"
+        f"🍿 <b>Для тебя:</b> Открывай приложение и листай ленту топовых фильмов. "
+        f"Лайкай то, что понравилось — всё сохранится в твоем профиле.\n\n"
+        f"👥 <b>Для двоих:</b> Создай комнату, отправь код партнеру и лови <b>Мэтчи</b> — "
+        f"фильмы, которые понравились вам обоим!\n\n"
+        f"Готов начать?"
+    )
+
+    await message.answer(welcome_text, reply_markup=kb.as_markup(), parse_mode="HTML")
 
 
 # Состояния
